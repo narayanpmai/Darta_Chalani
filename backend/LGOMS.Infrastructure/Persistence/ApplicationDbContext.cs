@@ -26,12 +26,15 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<SifarisTemplate> SifarisTemplates { get; set; }
     public DbSet<ArchiveDocument> ArchiveDocuments { get; set; }
     public DbSet<ApplicationUser> Users { get; set; }
+    public DbSet<DocumentChunk> DocumentChunks { get; set; }
 
     public Guid CurrentTenantId => _tenantService.GetTenantId();
     public Guid CurrentFiscalYearId => _fiscalYearService.GetFiscalYearId();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("vector");
+        
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Darta>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
@@ -42,6 +45,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<ArchiveDocument>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
         modelBuilder.Entity<ApplicationUser>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
         modelBuilder.Entity<FiscalYear>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
+        modelBuilder.Entity<DocumentChunk>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
 
         // Add additional configurations/indexes here...
     }

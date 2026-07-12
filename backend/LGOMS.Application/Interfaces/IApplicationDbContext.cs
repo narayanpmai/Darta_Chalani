@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<SifarisTemplate> SifarisTemplates { get; set; }
     DbSet<ArchiveDocument> ArchiveDocuments { get; set; }
     DbSet<ApplicationUser> Users { get; set; }
+    DbSet<DocumentChunk> DocumentChunks { get; set; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
