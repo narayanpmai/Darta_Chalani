@@ -1,0 +1,31 @@
+{
+  "Sidebar": {
+    "lgoms": "LGOMS",
+    "digitalGovernance": "डिजिटल सुशासन",
+    "mainMenu": "मुख्य मेनु",
+    "dashboard": "ड्यासबोर्ड",
+    "dashboardSub": "मुख्य ड्यासबोर्ड",
+    "patraLekhan": "पत्र लेखन",
+    "patraLekhanSub": "आधिकारिक पत्र तयार गर्नुहोस्",
+    "tippani": "टिप्पणी लेखन",
+    "tippaniSub": "कार्यालय टिप्पणी तयार गर्नुहोस्",
+    "nivedan": "निवेदन लेखन",
+    "nivedanSub": "निवेदन तथा आवेदन तयार गर्नुहोस्",
+    "darta": "दर्ता इन्ट्री",
+    "dartaSub": "आगमन पत्र दर्ता व्यवस्थापन",
+    "chalani": "चलानी इन्ट्री",
+    "chalaniSub": "प्रेषित पत्र चलानी व्यवस्थापन",
+    "aiChat": "GovAI Assistant",
+    "aiChatSub": "कृत्रिम बौद्धिकता सहयोगी",
+    "administration": "प्रशासन",
+    "reports": "रिपोर्ट्स",
+    "reportsSub": "डाटा विश्लेषक",
+    "gis": "GIS नक्सा",
+    "gisSub": "नक्सा विवरण",
+    "users": "प्रयोगकर्ताहरू",
+    "usersSub": "अधिकार व्यवस्थापन",
+    "settings": "सेटिङहरू",
+    "settingsSub": "प्रणाली सेटिङ",
+    "fiscalYear": "आर्थिक वर्ष"
+  }
+}

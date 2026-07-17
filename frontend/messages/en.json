@@ -1,0 +1,31 @@
+{
+  "Sidebar": {
+    "lgoms": "LGOMS",
+    "digitalGovernance": "Digital Governance",
+    "mainMenu": "MAIN MENU",
+    "dashboard": "Dashboard",
+    "dashboardSub": "Main Dashboard",
+    "patraLekhan": "Letter Writing",
+    "patraLekhanSub": "Draft Official Letters",
+    "tippani": "e-Comment",
+    "tippaniSub": "Draft Office Comments",
+    "nivedan": "Applications",
+    "nivedanSub": "Manage Applications",
+    "darta": "Registration (Darta)",
+    "dartaSub": "Manage Incoming Mail",
+    "chalani": "Dispatch (Chalani)",
+    "chalaniSub": "Manage Outgoing Mail",
+    "aiChat": "GovAI Assistant",
+    "aiChatSub": "Artificial Intelligence Helper",
+    "administration": "ADMINISTRATION",
+    "reports": "Reports",
+    "reportsSub": "Analytics Dashboard",
+    "gis": "GIS Dashboard",
+    "gisSub": "Map View",
+    "users": "Users",
+    "usersSub": "Manage RBAC",
+    "settings": "Settings",
+    "settingsSub": "System Config",
+    "fiscalYear": "Fiscal Year"
+  }
+}
