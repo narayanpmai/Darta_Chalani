@@ -87,7 +87,7 @@ export function LocationPrompt() {
             <Button 
               onClick={handleShare} 
               disabled={locating} 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2 h-11"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-11"
             >
               <Navigation className="h-4 w-4" />
               {locating ? "Locating..." : "Share Current Location"}

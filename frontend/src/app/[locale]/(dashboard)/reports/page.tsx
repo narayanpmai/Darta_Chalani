@@ -56,7 +56,7 @@ export default function ReportsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2"><Filter className="h-4 w-4" /> Filter Data</Button>
-          <Button className="bg-[#427DF3] hover:bg-blue-600 gap-2"><Download className="h-4 w-4" /> Export Report</Button>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"><Download className="h-4 w-4" /> Export Report</Button>
         </div>
       </div>
 

@@ -17,7 +17,7 @@ export default function PublicPortalHome() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             <Link href="/en/portal/apply">
-              <Button size="lg" className="bg-[#427DF3] hover:bg-blue-600 h-14 px-8 text-lg w-full sm:w-auto shadow-lg shadow-blue-200">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground h-14 px-8 text-lg w-full sm:w-auto shadow-lg shadow-blue-200">
                 Apply for Sifaris <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

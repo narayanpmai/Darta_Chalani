@@ -30,7 +30,7 @@ export default function SifarisTemplatesPage() {
           <p className="text-muted-foreground mt-1">Manage standard government recommendation formats (ई-सिफारिस ढाँचा)</p>
         </div>
         <Link href="/sifaris/templates/new">
-          <Button className="bg-[#427DF3] hover:bg-blue-600 text-white shadow-sm gap-2">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2">
             <Plus className="w-4 h-4" />
             Create New Template
           </Button>

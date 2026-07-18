@@ -151,7 +151,7 @@ export default function FiscalYearSettingsPage() {
                 onChange={date => setNewFy({...newFy, endDate: date})} 
               />
             </div>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleAdd} disabled={loading}>
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleAdd} disabled={loading}>
               Save Fiscal Year
             </Button>
           </CardContent>

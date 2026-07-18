@@ -98,7 +98,7 @@ export default function GisDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-2">
-              <Button onClick={handleGetLocation} disabled={locating} className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleGetLocation} disabled={locating} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                 {locating ? "Locating..." : "Get My Location"}
               </Button>
               {userLocation && (

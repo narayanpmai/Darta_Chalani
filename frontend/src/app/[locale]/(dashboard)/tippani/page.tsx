@@ -73,7 +73,7 @@ export default function TippaniPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline"><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white"><Send className="w-4 h-4 mr-2" /> Forward</Button>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Send className="w-4 h-4 mr-2" /> Forward</Button>
           <Button onClick={handlePrint} className="bg-emerald-600 hover:bg-emerald-700 text-white"><Printer className="w-4 h-4 mr-2" /> Print</Button>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function TippaniPage() {
             <CardContent className="pt-6">
               <div className="relative pl-6 border-l-2 border-blue-200 dark:border-blue-800 space-y-8">
                 <div className="relative">
-                  <span className="absolute -left-[35px] bg-blue-500 text-white rounded-full p-1 ring-4 ring-background">
+                  <span className="absolute -left-[35px] bg-primary text-primary-foreground rounded-full p-1 ring-4 ring-background">
                     <Check className="h-4 w-4" />
                   </span>
                   <h3 className="font-medium text-sm">Initiated</h3>

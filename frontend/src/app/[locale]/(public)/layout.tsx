@@ -11,7 +11,7 @@ export default function PublicLayout({
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#427DF3] text-white flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md">
               <Building2 className="w-5 h-5" />
             </div>
             <div className="flex flex-col">

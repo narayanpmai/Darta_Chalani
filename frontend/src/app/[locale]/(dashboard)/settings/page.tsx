@@ -315,7 +315,7 @@ export default function SettingsPage() {
                   </span>
                 )}
               </div>
-              <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 gap-2">
+              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
                 <Save className="h-4 w-4" /> Save Changes
               </Button>
             </CardFooter>

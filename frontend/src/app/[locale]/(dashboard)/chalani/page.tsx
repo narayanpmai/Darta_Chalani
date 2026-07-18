@@ -25,6 +25,15 @@ export default function ChalaniPage() {
   // Form State
   const [chalaniNo, setChalaniNo] = useState("")
   const [ccList, setCcList] = useState<string[]>([])
+  const [formData, setFormData] = useState({
+    receiver: "",
+    address: "",
+    subject: "",
+    deliveryMethod: "",
+    department: ""
+  })
+  const [miti, setMiti] = useState("2082-04-12")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Load initial settings and sequences
   useEffect(() => {
@@ -56,7 +65,8 @@ export default function ChalaniPage() {
     if (!activeFy || !user) return
 
     // Ward users get a separate sequence per ward. Palika users share one sequence.
-    const seqKey = user.ward ? `lgoms_ward_${user.ward}_chalani_seq` : `lgoms_palika_chalani_seq`
+    const safeFy = activeFy.replace(/\//g, "-")
+    const seqKey = user.ward ? `lgoms_ward_${user.ward}_chalani_seq_${safeFy}` : `lgoms_palika_chalani_seq_${safeFy}`
     
     const currentSeq = parseInt(localStorage.getItem(seqKey) || "0", 10) + 1
     const seqPadded = currentSeq.toString().padStart(4, '0') // e.g. 0001
@@ -79,15 +89,55 @@ export default function ChalaniPage() {
     setCcList(updated)
   }
 
-  const handleDispatch = () => {
-    // Mock save: increment the sequence in local storage so the next one gets a new number
-    if (!user) return
-    const seqKey = user.ward ? `lgoms_ward_${user.ward}_chalani_seq` : `lgoms_palika_chalani_seq`
-    const currentSeq = parseInt(localStorage.getItem(seqKey) || "0", 10)
-    localStorage.setItem(seqKey, (currentSeq + 1).toString())
-    
-    alert(`Dispatch Successful! Chalani Number: ${chalaniNo}`)
-    window.location.reload()
+  const handleDispatch = async () => {
+    if (!formData.receiver || !formData.subject) {
+      alert("कृपया पाउने कार्यालय/व्यक्ति र विषय भर्नुहोस्।")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const token = localStorage.getItem("lgoms_token")
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      
+      const payload = {
+        chalaniNumber: chalaniNo,
+        dispatchDate: new Date().toISOString(),
+        miti: miti,
+        receiverName: formData.receiver,
+        receiverAddress: formData.address,
+        subject: formData.subject,
+        originatingDepartment: formData.department,
+        deliveryMethod: formData.deliveryMethod || "Physical"
+      }
+
+      const res = await fetch(`${apiUrl}/Chalani`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.ok) {
+        if (!user) return
+        const safeFy = activeFy.replace(/\//g, "-")
+        const seqKey = user.ward ? `lgoms_ward_${user.ward}_chalani_seq_${safeFy}` : `lgoms_palika_chalani_seq_${safeFy}`
+        const currentSeq = parseInt(localStorage.getItem(seqKey) || "0", 10)
+        localStorage.setItem(seqKey, (currentSeq + 1).toString())
+        
+        alert(`Dispatch Successful! Chalani Number: ${chalaniNo}`)
+        window.location.reload()
+      } else {
+        alert("Dispatch Failed.")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Server Error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -99,8 +149,8 @@ export default function ChalaniPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline">Cancel</Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleDispatch}>
-            Dispatch File
+          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleDispatch} disabled={isSubmitting}>
+            {isSubmitting ? "Dispatching..." : "Dispatch File"}
           </Button>
         </div>
       </div>
@@ -121,29 +171,29 @@ export default function ChalaniPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date">Date (Miti)</Label>
-                  <NepaliDatePickerComponent id="date" value="" onChange={() => {}} />
+                  <NepaliDatePickerComponent id="date" value={miti} onChange={(val) => setMiti(val || "")} />
                 </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="receiver">Receiver (पाउने कार्यालय/व्यक्ति)</Label>
-                <Input id="receiver" placeholder="Enter receiver name or office" />
+                <Input id="receiver" placeholder="Enter receiver name or office" value={formData.receiver} onChange={(e) => setFormData({...formData, receiver: e.target.value})} />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="address">Address (ठेगाना)</Label>
-                <Input id="address" placeholder="Receiver address" />
+                <Input id="address" placeholder="Receiver address" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject (विषय)</Label>
-                <Input id="subject" placeholder="Enter the subject of the letter" />
+                <Input id="subject" placeholder="Enter the subject of the letter" value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="delivery-method">Delivery Method</Label>
-                  <Select>
+                  <Select value={formData.deliveryMethod} onValueChange={(val) => setFormData({...formData, deliveryMethod: val || ""})}>
                     <SelectTrigger id="delivery-method">
                       <SelectValue placeholder="Select Method" />
                     </SelectTrigger>
@@ -156,7 +206,7 @@ export default function ChalaniPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Originating Department</Label>
-                  <Select>
+                  <Select value={formData.department} onValueChange={(val) => setFormData({...formData, department: val || ""})}>
                     <SelectTrigger id="department">
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>

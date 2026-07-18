@@ -102,7 +102,7 @@ export default function ApplySifarisPage() {
 
             <div className="mt-8 flex justify-end gap-4">
               <Button variant="outline"><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
-              <Button onClick={handleSubmit} className="bg-[#427DF3] hover:bg-blue-600 text-white">
+              <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Send className="w-4 h-4 mr-2" /> Submit Application
               </Button>
             </div>

@@ -125,7 +125,7 @@ export default function NewTemplatePage() {
               <Button 
                 onClick={generateWithAi} 
                 disabled={isGenerating}
-                className="w-full bg-[#427DF3] hover:bg-blue-600 text-white"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isGenerating ? (
                   <>

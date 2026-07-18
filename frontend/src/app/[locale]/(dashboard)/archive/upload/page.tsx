@@ -146,7 +146,7 @@ export default function ArchiveUploadPage() {
 
             <Button 
               type="submit" 
-              className="w-full bg-[#427DF3] hover:bg-blue-600 h-12 text-lg shadow-md"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg shadow-md"
               disabled={isUploading || !fileName}
             >
               {isUploading ? "Saving to Archive..." : "Save Document"}

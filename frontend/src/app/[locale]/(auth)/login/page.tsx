@@ -48,7 +48,7 @@ export default function LoginPage() {
         {/* Left: Branding */}
         <div className="hidden md:flex flex-col gap-6 text-slate-700 px-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#427DF3] rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-12 h-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -71,7 +71,7 @@ export default function LoginPage() {
         {/* Right: Login Form */}
         <Card className="w-full shadow-2xl border-0 backdrop-blur-xl bg-white/90">
           <CardHeader className="text-center pb-2 pt-8">
-            <div className="mx-auto w-16 h-16 bg-[#427DF3] rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
+            <div className="mx-auto w-16 h-16 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
               <Building2 className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-slate-800">प्रवेश गर्नुहोस्</CardTitle>
@@ -127,7 +127,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-[#427DF3] hover:bg-blue-600 text-white mt-2 shadow-md shadow-blue-200 transition-all"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground mt-2 shadow-md shadow-blue-200 transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? (

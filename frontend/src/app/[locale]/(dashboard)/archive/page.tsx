@@ -25,7 +25,7 @@ export default function ArchiveDashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Digital Archive</h1>
           <p className="text-muted-foreground mt-1">Search and retrieve digitized historical records (डिजिटल अभिलेख).</p>
         </div>
-        <Button onClick={() => router.push('/en/archive/upload')} className="bg-[#427DF3] hover:bg-blue-600 gap-2">
+        <Button onClick={() => router.push('/en/archive/upload')} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
           <UploadCloud className="w-4 h-4" />
           Upload Document
         </Button>

@@ -45,7 +45,7 @@ export default function PublicStatusPage() {
               className="h-12 text-lg"
               required
             />
-            <Button type="submit" disabled={isSearching} className="h-12 px-8 bg-[#427DF3] hover:bg-blue-600 shadow-md">
+            <Button type="submit" disabled={isSearching} className="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
               {isSearching ? "Searching..." : <><Search className="w-5 h-5 mr-2"/> Track</>}
             </Button>
           </form>
@@ -96,7 +96,7 @@ export default function PublicStatusPage() {
                 </h4>
                 <p className="text-sm text-slate-600 mt-1">Your recommendation is approved and digitally signed.</p>
               </div>
-              <Button className="bg-[#427DF3] hover:bg-blue-600 shadow-sm">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
                 <Download className="w-4 h-4 mr-2" /> Download PDF
               </Button>
             </div>

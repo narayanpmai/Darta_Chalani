@@ -309,7 +309,7 @@ export default function UsersManagementPage() {
           </p>
         </div>
         {activeTab === "users" && (
-          <Button className="bg-[#427DF3] hover:bg-blue-600 gap-2 shrink-0" onClick={openCreateUser}>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shrink-0" onClick={openCreateUser}>
             <UserPlus className="w-4 h-4" /> + Create New Staff
           </Button>
         )}
@@ -561,7 +561,7 @@ export default function UsersManagementPage() {
                 </div>
               </div>
               {isAdmin && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1 text-xs h-8" onClick={openCreateBranch}>
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1 text-xs h-8" onClick={openCreateBranch}>
                   <Plus className="w-3.5 h-3.5" /> नयाँ थप्नुहोस्
                 </Button>
               )}
@@ -797,7 +797,7 @@ export default function UsersManagementPage() {
               <p className="text-xs text-muted-foreground">Ensure all required fields (*) are filled.</p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setUserModal(false)}>Cancel</Button>
-                <Button className="bg-[#427DF3] hover:bg-blue-600 px-8" onClick={handleSaveUser}>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8" onClick={handleSaveUser}>
                   {editUserId ? "Save Profile Changes" : "Create User"}
                 </Button>
               </div>
@@ -889,7 +889,7 @@ export default function UsersManagementPage() {
             </div>
             <div className="flex gap-3 px-6 py-4 border-t bg-gray-50">
               <Button variant="outline" className="flex-1" onClick={() => setBranchModal(false)}>रद्द</Button>
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={handleSaveBranch} disabled={!bForm.name.trim()}>
+              <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleSaveBranch} disabled={!bForm.name.trim()}>
                 {editBranchId ? "सुरक्षित गर्नुहोस्" : "शाखा/वडा थप्नुहोस्"}
               </Button>
             </div>

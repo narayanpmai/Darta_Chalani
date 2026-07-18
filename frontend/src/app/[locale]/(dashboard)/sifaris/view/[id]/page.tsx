@@ -43,7 +43,7 @@ export default function SifarisPrintView() {
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 flex flex-col items-center">
       <div className="w-full max-w-[21cm] mb-4 flex justify-end gap-3 print:hidden">
         <Button variant="outline" onClick={handlePrint} className="bg-white"><Printer className="w-4 h-4 mr-2" /> Print</Button>
-        <Button className="bg-[#427DF3] hover:bg-blue-600 text-white"><Download className="w-4 h-4 mr-2" /> Download PDF</Button>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Download className="w-4 h-4 mr-2" /> Download PDF</Button>
       </div>
 
       {/* A4 Paper Container */}

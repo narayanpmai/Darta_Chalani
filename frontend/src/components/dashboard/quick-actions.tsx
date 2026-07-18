@@ -35,7 +35,7 @@ export function QuickActionsMenu() {
   ]
 
   return (
-    <div className="bg-[#427DF3] w-full max-w-[400px] rounded-xl overflow-hidden shadow-[inset_0px_0px_20px_rgba(0,0,0,0.1)] p-6 flex flex-col gap-4 mx-auto border border-blue-400/30">
+    <div className="bg-primary text-primary-foreground w-full max-w-[400px] rounded-xl overflow-hidden shadow-[inset_0px_0px_20px_rgba(0,0,0,0.1)] p-6 flex flex-col gap-4 mx-auto border border-primary/30">
       {menuItems.map((item, index) => (
         <a
           key={index}

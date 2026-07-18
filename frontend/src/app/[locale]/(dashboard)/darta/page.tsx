@@ -23,6 +23,8 @@ export default function DartaPage() {
     department: "",
     priority: ""
   })
+  const [miti, setMiti] = useState("2082-04-12")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Load initial settings and sequences
   useEffect(() => {
@@ -42,7 +44,9 @@ export default function DartaPage() {
     if (!activeFy || !user) return
 
     // Ward users get a separate sequence per ward. Palika users share one sequence.
-    const seqKey = user.ward ? `lgoms_ward_${user.ward}_darta_seq` : `lgoms_palika_darta_seq`
+    // Appending activeFy ensures it restarts per fiscal year
+    const safeFy = activeFy.replace(/\//g, "-")
+    const seqKey = user.ward ? `lgoms_ward_${user.ward}_darta_seq_${safeFy}` : `lgoms_palika_darta_seq_${safeFy}`
     
     const currentSeq = parseInt(localStorage.getItem(seqKey) || "0", 10) + 1
     const seqPadded = currentSeq.toString().padStart(4, '0') // e.g. 0001
@@ -84,6 +88,56 @@ export default function DartaPage() {
     }
   }
 
+  const handleRegister = async () => {
+    if (!formData.sender || !formData.subject) {
+      alert("कृपया पठाउनेको नाम र विषय भर्नुहोस्।")
+      return
+    }
+    
+    setIsSubmitting(true)
+    try {
+      const token = localStorage.getItem("lgoms_token")
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      
+      const payload = {
+        dartaNumber: dartaNo,
+        registrationDate: new Date().toISOString(),
+        miti: miti,
+        senderName: formData.sender,
+        subject: formData.subject,
+        forwardedToDepartment: formData.department,
+        priority: formData.priority || "Normal"
+      }
+
+      const res = await fetch(`${apiUrl}/Darta`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.ok) {
+        // Increment sequence in local storage
+        const safeFy = activeFy.replace(/\//g, "-")
+        const seqKey = user?.ward ? `lgoms_ward_${user.ward}_darta_seq_${safeFy}` : `lgoms_palika_darta_seq_${safeFy}`
+        const currentSeq = parseInt(localStorage.getItem(seqKey) || "0", 10)
+        localStorage.setItem(seqKey, (currentSeq + 1).toString())
+        
+        alert("दर्ता सफल भयो!")
+        window.location.reload()
+      } else {
+        alert("दर्ता गर्न असफल भयो।")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("सर्भर त्रुटि")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -93,7 +147,9 @@ export default function DartaPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline">रद्द गर्नुहोस्</Button>
-          <Button>दर्ता गर्नुहोस्</Button>
+          <Button onClick={handleRegister} disabled={isSubmitting}>
+            {isSubmitting ? "दर्ता गर्दै..." : "दर्ता गर्नुहोस्"}
+          </Button>
         </div>
       </div>
 
@@ -113,7 +169,7 @@ export default function DartaPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date">मिति</Label>
-                  <NepaliDatePickerComponent id="date" value="2082-04-12" onChange={() => {}} />
+                  <NepaliDatePickerComponent id="date" value={miti} onChange={(val) => setMiti(val || "")} />
                 </div>
               </div>
               

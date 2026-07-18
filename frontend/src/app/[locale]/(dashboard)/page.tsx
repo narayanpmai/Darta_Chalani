@@ -100,7 +100,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex items-start gap-4 rounded-lg border p-3 bg-card hover:bg-muted/50 transition-colors shadow-sm">
-                <div className="mt-1 h-2 w-2 rounded-full bg-blue-500" />
+                <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
                 <div className="flex-1 space-y-1">
                   <p className="text-sm font-medium leading-none">Workflow Suggestion</p>
                   <p className="text-sm text-muted-foreground">You usually approve "Leave Requests" at 2 PM. There are 5 pending.</p>

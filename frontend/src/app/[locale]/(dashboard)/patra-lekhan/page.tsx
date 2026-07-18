@@ -44,7 +44,7 @@ export default function PatraLekhanPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline"><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
-          <Button onClick={handlePrint} className="bg-[#427DF3] hover:bg-blue-600"><Printer className="w-4 h-4 mr-2" /> Print Letter</Button>
+          <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Printer className="w-4 h-4 mr-2" /> Print Letter</Button>
         </div>
       </div>
 

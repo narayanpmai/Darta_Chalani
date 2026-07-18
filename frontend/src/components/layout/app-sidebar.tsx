@@ -93,10 +93,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-0">
-      <div className="flex h-full w-full flex-col bg-[#427DF3] text-white overflow-y-auto overflow-x-hidden">
+      <div className="flex h-full w-full flex-col bg-primary text-primary-foreground overflow-y-auto overflow-x-hidden">
         <SidebarHeader className="p-6 border-b border-white/10 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white text-blue-600 flex items-center justify-center font-black text-xl shadow-md">LG</div>
+            <div className="w-10 h-10 rounded-xl bg-white text-primary flex items-center justify-center font-black text-xl shadow-md">LG</div>
             <div className="flex flex-col">
               <span className="font-bold text-xl tracking-tight leading-tight">{t("lgoms")}</span>
               <span className="text-xs text-blue-100 opacity-90">{t("digitalGovernance")}</span>

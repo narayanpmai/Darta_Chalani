@@ -123,7 +123,7 @@ export function AppNavbar() {
           <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1">
             <Avatar className="h-8 w-8 cursor-pointer border hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all">
               <AvatarImage src="/placeholder-user.jpg" alt={user?.name ?? "User"} />
-              <AvatarFallback className="bg-blue-600 text-white text-xs font-bold">{initials}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">{initials}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-52" align="end" sideOffset={8}>

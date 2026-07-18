@@ -37,7 +37,7 @@ export default function FilesPage() {
               <Input placeholder="Type keywords found inside the documents..." className="pl-9" />
             </div>
             <Button variant="outline" className="gap-2"><Filter className="h-4 w-4" /> Filters</Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">Search Archive</Button>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Search Archive</Button>
           </div>
         </CardContent>
       </Card>

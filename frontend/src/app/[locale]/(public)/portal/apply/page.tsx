@@ -45,7 +45,7 @@ export default function PublicApplyPage() {
           <p className="text-sm text-slate-500 mb-6">Please save this number to check your application status later.</p>
           <div className="flex gap-4 justify-center">
             <Button onClick={() => router.push('/en/portal')} variant="outline">Back to Home</Button>
-            <Button onClick={() => router.push('/en/portal/status')} className="bg-[#427DF3] hover:bg-blue-600">Track Status</Button>
+            <Button onClick={() => router.push('/en/portal/status')} className="bg-primary hover:bg-primary/90 text-primary-foreground">Track Status</Button>
           </div>
         </Card>
       </div>
@@ -122,7 +122,7 @@ export default function PublicApplyPage() {
 
             <Button 
               type="submit" 
-              className="w-full bg-[#427DF3] hover:bg-blue-600 h-12 text-lg shadow-md"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg shadow-md"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : (

@@ -94,7 +94,7 @@ export default function CreateTenantWizard() {
               <span className="font-mono font-medium text-gray-900">{formData.adminUsername}</span>
             </div>
           </div>
-          <Link href={`/`} className="inline-flex items-center justify-center w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+          <Link href={`/`} className="inline-flex items-center justify-center w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors">
             Go to Main Dashboard
           </Link>
         </div>
@@ -107,7 +107,7 @@ export default function CreateTenantWizard() {
       {/* ─── SIDEBAR ─── */}
       <div className="w-[300px] bg-white border-r hidden md:flex flex-col p-6 fixed inset-y-0 z-10">
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-md">LG</div>
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-black text-xl shadow-md">LG</div>
           <div>
             <h1 className="font-bold text-gray-900 leading-tight">Super Admin</h1>
             <p className="text-xs text-muted-foreground">New Tenant Setup</p>
@@ -344,7 +344,7 @@ export default function CreateTenantWizard() {
           </Button>
           
           {step < 5 ? (
-            <Button className="bg-blue-600 hover:bg-blue-700 gap-2 px-8" onClick={handleNext}>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-8" onClick={handleNext}>
               Next <ArrowRight className="w-4 h-4" />
             </Button>
           ) : (
