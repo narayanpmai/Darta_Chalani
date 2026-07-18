@@ -3,13 +3,18 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts"
 
 const data = [
-  { name: "Jan", darta: 400, chalani: 240 },
-  { name: "Feb", darta: 300, chalani: 139 },
-  { name: "Mar", darta: 200, chalani: 980 },
-  { name: "Apr", darta: 278, chalani: 390 },
-  { name: "May", darta: 189, chalani: 480 },
-  { name: "Jun", darta: 239, chalani: 380 },
-  { name: "Jul", darta: 349, chalani: 430 },
+  { name: "बैशाख", darta: 120, chalani: 80 },
+  { name: "जेठ", darta: 150, chalani: 95 },
+  { name: "असार", darta: 210, chalani: 140 },
+  { name: "साउन", darta: 250, chalani: 190 },
+  { name: "भदौ", darta: 180, chalani: 110 },
+  { name: "असोज", darta: 140, chalani: 100 },
+  { name: "कार्तिक", darta: 90, chalani: 60 },
+  { name: "मंसिर", darta: 110, chalani: 85 },
+  { name: "पुष", darta: 130, chalani: 105 },
+  { name: "माघ", darta: 160, chalani: 125 },
+  { name: "फागुन", darta: 190, chalani: 155 },
+  { name: "चैत", darta: 220, chalani: 175 },
 ]
 
 export function OverviewChart() {

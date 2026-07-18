@@ -15,6 +15,8 @@ public interface IApplicationDbContext
     DbSet<ArchiveDocument> ArchiveDocuments { get; set; }
     DbSet<ApplicationUser> Users { get; set; }
     DbSet<DocumentChunk> DocumentChunks { get; set; }
+    DbSet<Ward> Wards { get; set; }
+    DbSet<SequenceTracker> SequenceTrackers { get; set; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

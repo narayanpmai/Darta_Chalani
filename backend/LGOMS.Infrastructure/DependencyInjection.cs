@@ -23,7 +23,8 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IAiService, LGOMS.Infrastructure.Services.GovAiService>();
-        
+        services.AddScoped<ISequenceGeneratorService, LGOMS.Infrastructure.Services.SequenceGeneratorService>();
+        services.AddScoped<IFileService, LGOMS.Infrastructure.Services.FileService>();
         // Semantic Kernel Setup
         services.AddScoped<Kernel>(provider => 
         {

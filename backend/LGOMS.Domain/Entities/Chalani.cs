@@ -6,6 +6,7 @@ public class Chalani : BaseEntity, IMustHaveTenant, IFiscalYearAware
 {
     public Guid FiscalYearId { get; set; }
     public Guid TenantId { get; set; }
+    public Guid? WardId { get; set; }
     
     public string ChalaniNumber { get; set; } = string.Empty;
     public DateTime DispatchDate { get; set; }

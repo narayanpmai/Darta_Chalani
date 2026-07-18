@@ -25,17 +25,29 @@ public class CreateChalaniCommand : IRequest<Guid>
 public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ISequenceGeneratorService _sequenceGenerator;
+    private readonly ITenantService _tenantService;
+    private readonly IFiscalYearService _fiscalYearService;
 
-    public CreateChalaniCommandHandler(IApplicationDbContext context)
+    public CreateChalaniCommandHandler(IApplicationDbContext context, ISequenceGeneratorService sequenceGenerator, ITenantService tenantService, IFiscalYearService fiscalYearService)
     {
         _context = context;
+        _sequenceGenerator = sequenceGenerator;
+        _tenantService = tenantService;
+        _fiscalYearService = fiscalYearService;
     }
 
     public async Task<Guid> Handle(CreateChalaniCommand request, CancellationToken cancellationToken)
     {
+        var tenantId = _tenantService.GetTenantId();
+        var fiscalYearId = _fiscalYearService.GetFiscalYearId();
+        Guid? wardId = null; // Extract from CurrentUserService in the future
+
+        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, wardId, fiscalYearId, "Chalani");
+
         var entity = new LGOMS.Domain.Entities.Chalani
         {
-            ChalaniNumber = request.ChalaniNumber,
+            ChalaniNumber = generatedNumber,
             DispatchDate = request.DispatchDate,
             Miti = request.Miti,
             ReceiverName = request.ReceiverName,

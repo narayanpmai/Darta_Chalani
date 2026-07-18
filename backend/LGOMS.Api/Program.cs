@@ -48,6 +48,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 // Use CORS (Allow all for development, restrict in production)
 app.UseCors(x => x

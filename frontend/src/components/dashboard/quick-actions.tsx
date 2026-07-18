@@ -1,6 +1,9 @@
 import { Mail, FileText, PenTool, Book, Send } from "lucide-react"
 
 export function QuickActionsMenu() {
+  // Hidden for now as per user request
+  return null;
+
   const menuItems = [
     {
       title: "पत्र लेखन",

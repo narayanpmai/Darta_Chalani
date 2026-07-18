@@ -6,6 +6,7 @@ public class Darta : BaseEntity, IMustHaveTenant, IFiscalYearAware
 {
     public Guid FiscalYearId { get; set; }
     public Guid TenantId { get; set; }
+    public Guid? WardId { get; set; }
     
     public string DartaNumber { get; set; } = string.Empty;
     public DateTime RegistrationDate { get; set; }

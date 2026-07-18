@@ -27,6 +27,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ArchiveDocument> ArchiveDocuments { get; set; }
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<DocumentChunk> DocumentChunks { get; set; }
+    public DbSet<Ward> Wards { get; set; }
+    public DbSet<SequenceTracker> SequenceTrackers { get; set; }
 
     public Guid CurrentTenantId => _tenantService.GetTenantId();
     public Guid CurrentFiscalYearId => _fiscalYearService.GetFiscalYearId();
@@ -46,6 +48,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<ApplicationUser>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
         modelBuilder.Entity<FiscalYear>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
         modelBuilder.Entity<DocumentChunk>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
+        modelBuilder.Entity<Ward>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
+        modelBuilder.Entity<SequenceTracker>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
 
         // Add additional configurations/indexes here...
     }

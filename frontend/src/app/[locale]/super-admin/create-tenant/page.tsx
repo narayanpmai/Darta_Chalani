@@ -54,13 +54,36 @@ export default function CreateTenantWizard() {
   const handleNext = () => setStep(s => Math.min(5, s + 1))
   const handlePrev = () => setStep(s => Math.max(1, s - 1))
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
     setIsDeploying(true)
-    // Simulate deployment process
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('/api/tenants', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Name: formData.nameEn,
+          Subdomain: formData.subdomain,
+          WardCount: parseInt(formData.wardCount),
+          AdminName: formData.adminName,
+          AdminUsername: formData.adminUsername,
+          AdminEmail: formData.adminEmail,
+          AdminPassword: formData.adminPassword
+        }),
+      });
+
+      if (response.ok) {
+        setDeploySuccess(true)
+      } else {
+        console.error('Failed to create tenant')
+      }
+    } catch (error) {
+      console.error('Error deploying tenant:', error)
+    } finally {
       setIsDeploying(false)
-      setDeploySuccess(true)
-    }, 3000)
+    }
   }
 
   const STEPS = [
