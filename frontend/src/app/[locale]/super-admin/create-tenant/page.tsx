@@ -14,11 +14,15 @@ import {
   SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { Link } from "@/i18n/routing"
+import provinces from "@/lib/nepal-data/provinces.json"
+import districts from "@/lib/nepal-data/districts.json"
+import localLevels from "@/lib/nepal-data/local_levels.json"
 
 export default function CreateTenantWizard() {
   const [step, setStep] = useState(1)
   const [isDeploying, setIsDeploying] = useState(false)
   const [deploySuccess, setDeploySuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -48,24 +52,100 @@ export default function CreateTenantWizard() {
   })
 
   const updateForm = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }))
+    setFormData(prev => {
+      const updated = { ...prev, [key]: value };
+      if (key === "nameEn") {
+        const generated = value.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const oldGenerated = prev.nameEn.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!prev.subdomain || prev.subdomain === oldGenerated) {
+          updated.subdomain = generated;
+        }
+      }
+      return updated;
+    })
   }
+
+  // Find selected province/district IDs
+  const selectedProvinceObj = provinces.find(p => p.name === formData.province);
+  const selectedProvinceId = selectedProvinceObj ? selectedProvinceObj.province_id : null;
+
+  const filteredDistricts = selectedProvinceId
+    ? districts.filter(d => d.province_id === selectedProvinceId)
+    : [];
+
+  const selectedDistrictObj = districts.find(d => d.name === formData.district);
+  const selectedDistrictId = selectedDistrictObj ? selectedDistrictObj.district_id : null;
+
+  const filteredLocalLevels = selectedDistrictId
+    ? localLevels.filter(l => l.district_id === selectedDistrictId)
+    : [];
+
+  // Determine current selected municipality base name
+  const selectedPalikaName = filteredLocalLevels.find(
+    l => formData.nameEn.startsWith(l.name)
+  )?.name || "";
+
+  // Nepalese to English mapping for Local Level types
+  const typeNpMapping: { [key: number]: string } = {
+    1: "महानगरपालिका",
+    2: "उपमहानगरपालिका",
+    3: "नगरपालिका",
+    4: "गाउँपालिका"
+  };
+
+  const typeEnMapping: { [key: number]: string } = {
+    1: "Metropolitan City",
+    2: "Sub-Metropolitan City",
+    3: "Municipality",
+    4: "Rural Municipality"
+  };
+
+  const typeValueMapping: { [key: number]: string } = {
+    1: "Metropolitan",
+    2: "Sub-Metropolitan",
+    3: "Municipality",
+    4: "Rural Municipality"
+  };
+
+  const handlePalikaChange = (value: string | null) => {
+    if (!value) return;
+    const selectedPalika = filteredLocalLevels.find(l => l.name === value);
+    if (!selectedPalika) return;
+
+    const typeId = selectedPalika.local_level_type_id;
+    const formalNp = `${selectedPalika.nepali_name} ${typeNpMapping[typeId] || ""}`;
+    const formalEn = `${selectedPalika.name} ${typeEnMapping[typeId] || ""}`;
+    const typeVal = typeValueMapping[typeId] || "Municipality";
+    const sub = selectedPalika.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    setFormData(prev => ({
+      ...prev,
+      nameNp: formalNp,
+      nameEn: formalEn,
+      palikaType: typeVal,
+      subdomain: sub
+    }));
+  };
 
   const handleNext = () => setStep(s => Math.min(5, s + 1))
   const handlePrev = () => setStep(s => Math.max(1, s - 1))
 
   const handleDeploy = async () => {
     setIsDeploying(true)
+    setError(null)
+    
+    const subdomainToDeploy = formData.subdomain || formData.nameEn.toLowerCase().replace(/[^a-z0-9]/g, '');
     
     try {
-      const response = await fetch('/api/tenants', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${apiUrl}/tenants`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           Name: formData.nameEn,
-          Subdomain: formData.subdomain,
+          Subdomain: subdomainToDeploy,
           WardCount: parseInt(formData.wardCount),
           AdminName: formData.adminName,
           AdminUsername: formData.adminUsername,
@@ -75,12 +155,26 @@ export default function CreateTenantWizard() {
       });
 
       if (response.ok) {
+        setFormData(prev => ({ ...prev, subdomain: subdomainToDeploy }));
         setDeploySuccess(true)
       } else {
-        console.error('Failed to create tenant')
+        let errorMsg = 'Failed to create tenant';
+        try {
+          const errData = await response.json();
+          if (errData && errData.message) {
+            errorMsg = errData.message;
+          } else if (errData && errData.title) {
+            errorMsg = errData.title;
+          }
+        } catch (e) {
+          // ignore
+        }
+        setError(errorMsg)
+        console.error('Failed to create tenant:', errorMsg)
       }
-    } catch (error) {
-      console.error('Error deploying tenant:', error)
+    } catch (err: any) {
+      setError(err.message || 'Error deploying tenant')
+      console.error('Error deploying tenant:', err)
     } finally {
       setIsDeploying(false)
     }
@@ -177,32 +271,71 @@ export default function CreateTenantWizard() {
             <div className="grid grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="col-span-2 md:col-span-1 grid gap-2">
                 <Label>Province <span className="text-red-500">*</span></Label>
-                <Select value={formData.province} onValueChange={v => updateForm("province", v)}>
+                <Select 
+                  value={formData.province} 
+                  onValueChange={v => {
+                    setFormData(prev => ({
+                      ...prev,
+                      province: v || "",
+                      district: "",
+                      palikaType: "",
+                      nameNp: "",
+                      nameEn: "",
+                      subdomain: ""
+                    }));
+                  }}
+                >
                   <SelectTrigger><SelectValue placeholder="Select Province" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Bagmati">Bagmati Province</SelectItem>
-                    <SelectItem value="Gandaki">Gandaki Province</SelectItem>
-                    <SelectItem value="Lumbini">Lumbini Province</SelectItem>
+                    {provinces.map(p => (
+                      <SelectItem key={p.province_id} value={p.name}>
+                        {p.nepali_name} ({p.name})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="col-span-2 md:col-span-1 grid gap-2">
                 <Label>District <span className="text-red-500">*</span></Label>
-                <Input placeholder="e.g. Kathmandu" value={formData.district} onChange={e => updateForm("district", e.target.value)} />
+                <Select 
+                  value={formData.district} 
+                  onValueChange={v => {
+                    setFormData(prev => ({
+                      ...prev,
+                      district: v || "",
+                      nameNp: "",
+                      nameEn: "",
+                      subdomain: ""
+                    }));
+                  }}
+                  disabled={!formData.province}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredDistricts.map(d => (
+                      <SelectItem key={d.district_id} value={d.name}>
+                        {d.nepali_name} ({d.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="col-span-2 md:col-span-1 grid gap-2">
-                <Label>Municipality Name (Nepali) <span className="text-red-500">*</span></Label>
-                <Input placeholder="जस्तै: काठमाडौं महानगरपालिका" value={formData.nameNp} onChange={e => updateForm("nameNp", e.target.value)} />
-              </div>
-              <div className="col-span-2 md:col-span-1 grid gap-2">
-                <Label>Municipality Name (English) <span className="text-red-500">*</span></Label>
-                <Input placeholder="e.g. Kathmandu Metropolitan" value={formData.nameEn} onChange={e => updateForm("nameEn", e.target.value)} />
-                <p className="text-[10px] text-muted-foreground">Will be used to auto-generate subdomain.</p>
-              </div>
-              <div className="col-span-2 md:col-span-1 grid gap-2">
-                <Label>Number of Wards <span className="text-red-500">*</span></Label>
-                <Input type="number" min="1" max="35" placeholder="e.g. 9" value={formData.wardCount} onChange={e => updateForm("wardCount", e.target.value)} />
-                <p className="text-[10px] text-muted-foreground">System will automatically create {formData.wardCount || 0} ward branches.</p>
+                <Label>Local Level (Municipality) <span className="text-red-500">*</span></Label>
+                <Select 
+                  value={selectedPalikaName} 
+                  onValueChange={handlePalikaChange}
+                  disabled={!formData.district}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select Local Level" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredLocalLevels.map(l => (
+                      <SelectItem key={l.municipality_id} value={l.name}>
+                        {l.nepali_name} ({l.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="col-span-2 md:col-span-1 grid gap-2">
                 <Label>Local Level Type</Label>
@@ -215,6 +348,20 @@ export default function CreateTenantWizard() {
                     <SelectItem value="Rural Municipality">Rural Municipality</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="col-span-2 md:col-span-1 grid gap-2">
+                <Label>Municipality Name (Nepali) <span className="text-red-500">*</span></Label>
+                <Input placeholder="जस्तै: काठमाडौं महानगरपालिका" value={formData.nameNp} onChange={e => updateForm("nameNp", e.target.value)} />
+              </div>
+              <div className="col-span-2 md:col-span-1 grid gap-2">
+                <Label>Municipality Name (English) <span className="text-red-500">*</span></Label>
+                <Input placeholder="e.g. Kathmandu Metropolitan City" value={formData.nameEn} onChange={e => updateForm("nameEn", e.target.value)} />
+                <p className="text-[10px] text-muted-foreground">Will be used to auto-generate subdomain.</p>
+              </div>
+              <div className="col-span-2 md:col-span-1 grid gap-2">
+                <Label>Number of Wards <span className="text-red-500">*</span></Label>
+                <Input type="number" min="1" max="35" placeholder="e.g. 9" value={formData.wardCount} onChange={e => updateForm("wardCount", e.target.value)} />
+                <p className="text-[10px] text-muted-foreground">System will automatically create {formData.wardCount || 0} ward branches.</p>
               </div>
             </div>
           )}
@@ -232,7 +379,7 @@ export default function CreateTenantWizard() {
               <div className="col-span-2 md:col-span-1 grid gap-2">
                 <Label>System Subdomain <span className="text-red-500">*</span></Label>
                 <div className="flex items-center">
-                  <Input placeholder="kathmandu" className="rounded-r-none border-r-0" value={formData.subdomain || formData.nameEn.toLowerCase().replace(/[^a-z0-9]/g, '')} onChange={e => updateForm("subdomain", e.target.value)} />
+                  <Input placeholder="kathmandu" className="rounded-r-none border-r-0" value={formData.subdomain} onChange={e => updateForm("subdomain", e.target.value)} />
                   <div className="bg-gray-100 border border-l-0 rounded-r-md px-3 h-10 flex items-center text-sm text-gray-500 whitespace-nowrap">
                     .lgoms.gov.np
                   </div>
@@ -338,7 +485,7 @@ export default function CreateTenantWizard() {
                   <div className="font-medium text-gray-900">{formData.wardCount} Wards, {formData.storageQuota} Storage</div>
 
                   <div className="text-gray-500">System URL:</div>
-                  <div className="font-mono text-blue-600">https://{formData.subdomain || "tenant"}.lgoms.gov.np</div>
+                  <div className="font-mono text-blue-600">https://{formData.subdomain || formData.nameEn.toLowerCase().replace(/[^a-z0-9]/g, '') || "tenant"}.lgoms.gov.np</div>
 
                   <div className="text-gray-500">Admin Account:</div>
                   <div className="font-medium text-gray-900">{formData.adminName} ({formData.adminUsername})</div>
@@ -353,6 +500,13 @@ export default function CreateTenantWizard() {
                   <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
                   <p className="font-medium animate-pulse">Provisioning Tenant Architecture...</p>
                   <p className="text-xs text-gray-500">Creating database records and generating ward branches.</p>
+                </div>
+              )}
+
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex flex-col gap-1">
+                  <p className="font-semibold text-red-900">Deployment Failed</p>
+                  <p>{error}</p>
                 </div>
               )}
             </div>

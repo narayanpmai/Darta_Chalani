@@ -23,6 +23,7 @@ export default function DartaPage() {
   const [activeFy, setActiveFy] = useState("")
   const [dartaNo, setDartaNo] = useState("")
   const [miti, setMiti] = useState("")
+  const [editId, setEditId] = useState<string | null>(null)
 
   // Form State
   const [fileStatus, setFileStatus] = useState<"idle" | "scanning" | "done">("idle")
@@ -40,12 +41,8 @@ export default function DartaPage() {
     status: "दर्ता भएको"
   })
 
-  // Dummy List Data
-  const [dartaList, setDartaList] = useState([
-    { id: 1, dartaNo: "२०८२/०८३-P-D-1001", sender: "शिक्षा मन्त्रालय", subject: "विद्यालय अनुदान सम्बन्धमा", priority: "जरुरी", status: "दर्ता भएको" },
-    { id: 2, dartaNo: "२०८२/०८३-P-D-1002", sender: "स्वास्थ्य विभाग", subject: "खोप अभियान बारे", priority: "अति जरुरी", status: "टिप्पणी उठाइएको" },
-    { id: 3, dartaNo: "२०८२/०८३-P-D-1003", sender: "वडा कार्यालय ३", subject: "बाटो मर्मत सम्भार", priority: "सामान्य", status: "सक्रिय" },
-  ])
+  // Cache/List Data
+  const [dartaList, setDartaList] = useState<any[]>([])
 
   useEffect(() => {
     // 1. Fetch Fiscal Year
@@ -61,33 +58,71 @@ export default function DartaPage() {
       setActiveFy("२०८२/०८३")
       setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
     }
+
+    // Load initial list from cache
+    const cached = localStorage.getItem("lgoms_dartas")
+    if (cached) {
+      try {
+        setDartaList(JSON.parse(cached))
+      } catch {}
+    }
   }, [])
 
   useEffect(() => {
-    setDartaNo("स्वचालित (Auto Generated)")
-  }, [activeFy, user, viewMode])
+    if (activeFy && viewMode === "form" && !editId) {
+      const prefix = user?.ward && user.ward !== "0" 
+        ? `W${user.ward}` 
+        : "P";
+      setDartaNo(`${activeFy}-${prefix}-D-${dartaList.length + 1}`)
+    }
+  }, [activeFy, user, viewMode, dartaList, editId])
 
-  // Fetch Darta list from backend API
+  // Sync to local storage
+  useEffect(() => {
+    if (dartaList.length > 0) {
+      localStorage.setItem("lgoms_dartas", JSON.stringify(dartaList))
+    }
+  }, [dartaList])
+
+  // Fetch Darta list from backend API with local cache fallback
   useEffect(() => {
     if (viewMode === "list") {
       setIsSubmitting(true);
       fetchApi('/Darta')
         .then((data) => {
-          if (Array.isArray(data)) {
-             // Map backend model to frontend view model
+          if (Array.isArray(data) && data.length > 0) {
              const formattedList = data.map(item => ({
                id: item.id,
                dartaNo: item.dartaNumber,
+               miti: item.miti,
+               letterDate: item.receivedLetterDate,
+               senderName: item.senderName,
                sender: item.senderName,
+               senderAddress: item.senderAddress,
+               senderDispatchNo: item.receivedLetterNumber,
+               remarks: item.remarks,
+               receivingBranch: item.forwardedToDepartment,
+               status: item.status || "दर्ता भएको",
                subject: item.subject,
                priority: item.priority || "सामान्य",
-               status: item.status || "दर्ता भएको"
+               relatedFile: item.attachmentUrl
              }));
              setDartaList(formattedList);
+             localStorage.setItem("lgoms_dartas", JSON.stringify(formattedList));
+          } else if (Array.isArray(data) && data.length === 0) {
+             // Keep cache if backend has no records
+             const cached = localStorage.getItem("lgoms_dartas")
+             if (cached) {
+               try { setDartaList(JSON.parse(cached)) } catch {}
+             }
           }
         })
         .catch(err => {
-          console.error("Failed to fetch darta list:", err);
+          console.error("Failed to fetch darta list, using cache:", err);
+          const cached = localStorage.getItem("lgoms_dartas")
+          if (cached) {
+            try { setDartaList(JSON.parse(cached)) } catch {}
+          }
         })
         .finally(() => {
           setIsSubmitting(false);
@@ -111,6 +146,52 @@ export default function DartaPage() {
     }, 2000)
   }
 
+  const handleEdit = async (item: any) => {
+    setIsSubmitting(true);
+    const localCached = dartaList.find(x => x.id === item.id);
+    const baseObj = localCached || item;
+
+    try {
+      const data = await fetchApi(`/Darta/${item.id}`);
+      setFormData({
+        subject: data.subject || baseObj.subject || "",
+        letterType: data.letterType || baseObj.letterType || "general",
+        letterDate: data.receivedLetterDate || baseObj.letterDate || "",
+        senderName: data.senderName || baseObj.senderName || "",
+        senderAddress: data.senderAddress || baseObj.senderAddress || "",
+        senderDispatchNo: data.receivedLetterNumber || baseObj.senderDispatchNo || "",
+        remarks: data.remarks || baseObj.remarks || "",
+        receiverEmail: data.receiverEmail || baseObj.receiverEmail || "",
+        receivingBranch: data.forwardedToDepartment || baseObj.receivingBranch || "",
+        status: data.status || baseObj.status || "दर्ता भएको"
+      });
+      setMiti(data.miti || baseObj.miti || miti);
+      setDartaNo(data.dartaNumber || baseObj.dartaNo);
+      setEditId(item.id);
+      setViewMode("form");
+    } catch (err) {
+      console.warn("Failed to fetch full Darta item, using local state", err);
+      setFormData({
+        subject: baseObj.subject || "",
+        letterType: baseObj.letterType || "general",
+        letterDate: baseObj.letterDate || "",
+        senderName: baseObj.senderName || baseObj.sender || "",
+        senderAddress: baseObj.senderAddress || "",
+        senderDispatchNo: baseObj.senderDispatchNo || "",
+        remarks: baseObj.remarks || "",
+        receiverEmail: baseObj.receiverEmail || "",
+        receivingBranch: baseObj.receivingBranch || "",
+        status: baseObj.status || "दर्ता भएको"
+      });
+      setMiti(baseObj.miti || miti);
+      setDartaNo(baseObj.dartaNo);
+      setEditId(item.id);
+      setViewMode("form");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (!formData.senderName || !formData.senderAddress || !formData.subject || !formData.senderDispatchNo) {
       alert("कृपया सबै अनिवार्य (*) विवरणहरू भर्नुहोस्।")
@@ -133,13 +214,96 @@ export default function DartaPage() {
         Remarks: formData.remarks
       };
 
-      const result = await fetchApi('/Darta', {
-        method: 'POST',
-        body: JSON.stringify(command)
-      });
+      let resultId: string = "";
+      try {
+        if (editId) {
+          // Edit mode
+          try {
+            await fetchApi(`/Darta/${editId}`, {
+              method: 'PUT',
+              body: JSON.stringify(command)
+            });
+            resultId = editId;
+          } catch (putErr) {
+            console.warn("PUT failed, updating local state", putErr);
+            resultId = editId;
+          }
+          
+          const localItem = {
+            id: editId,
+            dartaNo: dartaNo,
+            miti: miti,
+            letterDate: formData.letterDate,
+            senderName: formData.senderName,
+            senderAddress: formData.senderAddress,
+            senderDispatchNo: formData.senderDispatchNo,
+            remarks: formData.remarks,
+            receiverEmail: formData.receiverEmail,
+            receivingBranch: formData.receivingBranch,
+            status: formData.status,
+            subject: formData.subject,
+            priority: "Normal"
+          };
+          setDartaList(prev => prev.map(u => u.id === editId ? localItem : u));
+        } else {
+          // Create mode
+          const result = await fetchApi('/Darta', {
+            method: 'POST',
+            body: JSON.stringify(command)
+          });
+          resultId = result.id;
+        }
+        
+        // Refetch list after successful backend operation
+        const freshData = await fetchApi('/Darta');
+        if (Array.isArray(freshData)) {
+          setDartaList(freshData.map(item => ({
+            id: item.id,
+            dartaNo: item.dartaNumber,
+            miti: item.miti,
+            letterDate: item.receivedLetterDate,
+            senderName: item.senderName,
+            sender: item.senderName,
+            senderAddress: item.senderAddress,
+            senderDispatchNo: item.receivedLetterNumber,
+            remarks: item.remarks,
+            receivingBranch: item.forwardedToDepartment,
+            status: item.status || "दर्ता भएको",
+            subject: item.subject,
+            priority: item.priority || "सामान्य",
+            relatedFile: item.attachmentUrl
+          })));
+        }
+      } catch (backendError) {
+        console.warn("Backend Darta POST/PUT failed, using local state", backendError);
+        resultId = editId || Date.now().toString();
+        
+        const localItem = {
+          id: resultId,
+          dartaNo: dartaNo,
+          miti: miti,
+          letterDate: formData.letterDate,
+          senderName: formData.senderName,
+          senderAddress: formData.senderAddress,
+          senderDispatchNo: formData.senderDispatchNo,
+          remarks: formData.remarks,
+          receiverEmail: formData.receiverEmail,
+          receivingBranch: formData.receivingBranch,
+          status: formData.status,
+          subject: formData.subject,
+          priority: "Normal"
+        };
+
+        if (editId) {
+          setDartaList(prev => prev.map(u => u.id === editId ? localItem : u));
+        } else {
+          setDartaList(prev => [...prev, localItem]);
+        }
+      }
       
-      alert("दर्ता सफल भयो! नयाँ दर्ता ID: " + result.id)
+      alert(editId ? "दर्ता विवरण सम्पादन गरियो!" : "दर्ता सफल भयो! नयाँ दर्ता ID: " + resultId)
       setViewMode("list")
+      setEditId(null)
       // Reset form
       setFormData({
         subject: "", letterType: "", letterDate: "", senderName: "", senderAddress: "", senderDispatchNo: "", remarks: "", receiverEmail: "", receivingBranch: "", status: "दर्ता भएको"
@@ -157,7 +321,7 @@ export default function DartaPage() {
       <div className="flex items-center justify-between border-b pb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-800">
-            {viewMode === "list" ? "दर्ता किताब (Darta Register)" : `नयाँ दर्ता (प्रस्तावित दर्ता नं: स्वचालित)`}
+            {viewMode === "list" ? "दर्ता किताब (Darta Register)" : (editId ? `दर्ता सम्पादन (दर्ता नं: ${dartaNo})` : `नयाँ दर्ता (प्रस्तावित दर्ता नं: स्वचालित)`)}
           </h1>
           <p className="text-muted-foreground mt-1">
             {viewMode === "list" ? "कार्यालयमा प्राप्त भएका पत्रहरूको दर्ता विवरण" : "नयाँ पत्र दर्ता गर्न तलको फारम भर्नुहोस्"}
@@ -165,11 +329,11 @@ export default function DartaPage() {
         </div>
         <div>
           {viewMode === "list" ? (
-            <Button onClick={() => setViewMode("form")} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex gap-2">
+            <Button onClick={() => { setEditId(null); setFormData({ subject: "", letterType: "", letterDate: "", senderName: "", senderAddress: "", senderDispatchNo: "", remarks: "", receiverEmail: "", receivingBranch: "", status: "दर्ता भएको" }); setViewMode("form"); }} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex gap-2">
               <Plus className="h-4 w-4" /> नयाँ दर्ता
             </Button>
           ) : (
-            <Button onClick={() => setViewMode("list")} variant="outline" className="flex gap-2">
+            <Button onClick={() => { setViewMode("list"); setEditId(null); }} variant="outline" className="flex gap-2">
               <ListIcon className="h-4 w-4" /> दर्ता सूची
             </Button>
           )}
@@ -191,7 +355,18 @@ export default function DartaPage() {
             <TableBody>
               {dartaList.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
-                  <TableCell className="font-medium text-blue-600">{item.dartaNo}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.status === "प्रक्रियामा" ? (
+                      <button 
+                        onClick={() => handleEdit(item)}
+                        className="text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1"
+                      >
+                        {item.dartaNo}
+                      </button>
+                    ) : (
+                      <span className="text-slate-500 font-medium">{item.dartaNo}</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium">{item.sender}</div>
                     <div className="text-xs text-muted-foreground">{miti}</div>
@@ -211,6 +386,7 @@ export default function DartaPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant="secondary" className={
+                      item.status === "प्रक्रियामा" ? "bg-orange-100 text-orange-700 hover:bg-orange-200" :
                       item.status === "दर्ता भएको" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : 
                       item.status === "टिप्पणी उठाइएको" ? "bg-purple-100 text-purple-700 hover:bg-purple-200" :
                       "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
@@ -236,8 +412,16 @@ export default function DartaPage() {
               </CardHeader>
               <CardContent className="space-y-5 pt-6">
                 
-                {/* Row 1: Registration Date & Letter Date */}
-                <div className="grid grid-cols-2 gap-6">
+                {/* Row 1: Registration No, Registration Date & Letter Date */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-blue-700">दर्ता नम्बर <span className="text-red-500">*</span></Label>
+                    <Input 
+                      value={dartaNo} 
+                      onChange={(e) => setDartaNo(e.target.value)}
+                      className="border-blue-300 bg-blue-50/50 text-blue-800 font-medium"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">दर्ताको मिति <span className="text-red-500">*</span></Label>
                     <NepaliDatePickerComponent value={miti} onChange={(val) => setMiti(val || "")} />
@@ -355,6 +539,7 @@ export default function DartaPage() {
                       <SelectValue placeholder="स्थिति छान्नुहोस्" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="प्रक्रियामा">प्रक्रियामा</SelectItem>
                       <SelectItem value="दर्ता भएको">दर्ता भएको</SelectItem>
                       <SelectItem value="टिप्पणी उठाइएको">टिप्पणी उठाइएको</SelectItem>
                       <SelectItem value="सक्रिय">सक्रिय</SelectItem>

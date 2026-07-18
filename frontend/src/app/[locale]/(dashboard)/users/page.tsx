@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   UserPlus, Pencil, Trash2, ShieldCheck, ArrowLeftRight,
   X, Eye, EyeOff, Search, Users as UsersIcon,
@@ -52,6 +53,7 @@ interface StaffUser {
 
 // ─── Seed: Roles ──────────────────────────────────────────────────────────────
 const SEED_ROLES: RoleCategory[] = [
+  { id: 0, name: "Super Admin",        description: "प्रणाली व्यवस्थापक — प्रणाली स्तरको सम्पूर्ण पहुँच।", color: "bg-red-100 text-red-700 border-red-200", scope: "palika" },
   { id: 1, name: "Municipality Admin", description: "पालिका स्तरको सम्पूर्ण पहुँच — सबै वडाको डाटा व्यवस्थापन।", color: "bg-purple-100 text-purple-700 border-purple-200", scope: "palika" },
   { id: 2, name: "Ward Chair",         description: "वडा स्तरको पहुँच — दर्ता, चलानी र सिफारिस अनुमोदन।",      color: "bg-blue-100 text-blue-700 border-blue-200",   scope: "ward" },
   { id: 3, name: "Operator",           description: "डाटा प्रविष्टि मात्र — दर्ता/चलानी प्रविष्टि र रेकर्ड।",  color: "bg-orange-100 text-orange-700 border-orange-200", scope: "ward" },
@@ -67,6 +69,7 @@ const SEED_BRANCHES: BranchCategory[] = [
 
 // ─── Seed: Users ──────────────────────────────────────────────────────────────
 const SEED_USERS: StaffUser[] = [
+  { id: 0, name: "Super Admin", email: "superadmin@lgoms.gov.np", roleId: 0, branchId: 1, departmentId: 1, status: "Active", joined: "2082/01/01", username: "superadmin", password: "admin123", employeeCode: "EMP-000", mfaStatus: "Enabled", lastLogin: "2082/04/12 11:00 AM", avatar: null },
   { id: 1, name: "Admin User",  email: "admin@lgoms.gov.np",      roleId: 1, branchId: 1, departmentId: 1, status: "Active",   joined: "2082/03/15", username: "admin", password: "admin123", employeeCode: "EMP-001", mfaStatus: "Enabled", lastLogin: "2082/04/10 10:23 AM", avatar: null },
   { id: 2, name: "Ram Bahadur", email: "ram.ward1@lgoms.gov.np",  roleId: 2, branchId: 3, departmentId: 3, status: "Active",   joined: "2082/01/20", username: "ram_ward1", password: "ward123", employeeCode: "EMP-002", mfaStatus: "Disabled", lastLogin: "2082/04/09 14:10 PM", avatar: null },
   { id: 3, name: "Sita Sharma", email: "sita.op@lgoms.gov.np",    roleId: 3, branchId: 2, departmentId: 2, status: "Active",   joined: "2081/11/05", username: "sita_op", password: "op123", employeeCode: "EMP-003", mfaStatus: "Enabled", lastLogin: "2082/04/11 09:15 AM", avatar: null },
@@ -88,22 +91,33 @@ function todayBS(): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function UsersManagementPage() {
-  const { isAdmin } = useAuth()
+function UsersManagementContent() {
+  const { isAdmin, isSuperAdmin } = useAuth()
   const [mounted, setMounted] = useState(false)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   // ── Shared state
-  const [activeTab, setActiveTab] = useState<"users" | "categories">("users")
+  const defaultTab = (searchParams.get("tab") as "users" | "categories") || "users"
+  const [activeTab, setActiveTab] = useState<"users" | "categories">(defaultTab)
 
   // ── Data
   const [roles, setRoles]       = useState<RoleCategory[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("lgoms_roles")
-      if (stored) return JSON.parse(stored)
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (!parsed.some((r: any) => r.id === 0)) {
+          return [
+            { id: 0, name: "Super Admin", description: "प्रणाली व्यवस्थापक — प्रणाली स्तरको सम्पूर्ण पहुँच।", color: "bg-red-100 text-red-700 border-red-200", scope: "palika" },
+            ...parsed
+          ];
+        }
+        return parsed;
+      }
     }
     return SEED_ROLES
   })
@@ -117,7 +131,16 @@ export default function UsersManagementPage() {
   const [users, setUsers]       = useState<StaffUser[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("lgoms_users_db")
-      if (stored) return JSON.parse(stored)
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (!parsed.some((u: any) => u.username === "superadmin")) {
+          return [
+            { id: 0, name: "Super Admin", email: "superadmin@lgoms.gov.np", roleId: 0, branchId: 1, departmentId: 1, status: "Active", joined: "2082/01/01", username: "superadmin", password: "admin123", employeeCode: "EMP-000", mfaStatus: "Enabled", lastLogin: "2082/04/12 11:00 AM", avatar: null },
+            ...parsed
+          ];
+        }
+        return parsed;
+      }
     }
     return SEED_USERS
   })
@@ -196,7 +219,12 @@ export default function UsersManagementPage() {
   const validateUser = () => {
     const e: Record<string, string> = {}
     if (!uForm.name.trim())     e.name     = "नाम आवश्यक छ"
-    if (!uForm.email.trim())    e.email    = "Email आवश्यक छ"
+    
+    if (!uForm.email.trim()) {
+      e.email    = "Email आवश्यक छ"
+    } else if (users.some(u => u.email.toLowerCase() === uForm.email.trim().toLowerCase() && u.id !== editUserId)) {
+      e.email    = "यो Email पहिले नै दर्ता भइसकेको छ"
+    }
     if (!uForm.username.trim()) e.username = "Username आवश्यक छ"
     if (!uForm.employeeCode.trim()) e.employeeCode = "Employee Code आवश्यक छ"
     if (!uForm.roleId)          e.roleId   = "Role छान्नुहोस्"
@@ -270,6 +298,13 @@ export default function UsersManagementPage() {
 
   // ─────────────────────────────── FILTERED USERS ──────────────────────────────
   const filtered = users.filter(u => {
+    const uRole = roles.find(r => r.id === u.roleId)
+    const isSuperAdminRole = uRole?.name === "Super Admin" || u.roleId === 0
+
+    // Filter municipality users out of Super Admin views, and Super Admins out of municipality views
+    if (isSuperAdmin && !isSuperAdminRole) return false
+    if (!isSuperAdmin && isSuperAdminRole) return false
+
     const matchSearch = [u.name, u.email, u.username, u.employeeCode].some(v => v?.toLowerCase().includes(search.toLowerCase()))
     const matchRole   = filterRoleId === "all" || String(u.roleId) === filterRoleId
     const matchStatus = filterStatus === "all" || u.status === filterStatus
@@ -285,11 +320,22 @@ export default function UsersManagementPage() {
   const isPalikaScope = selectedRole?.scope === "palika"
 
   // ─────────────────────────────── STATS ───────────────────────────────────────
+  const displayedUsers = users.filter(u => {
+    const uRole = roles.find(r => r.id === u.roleId)
+    const isSuperAdminRole = uRole?.name === "Super Admin" || u.roleId === 0
+    return isSuperAdmin ? isSuperAdminRole : !isSuperAdminRole
+  })
+  
+  const displayedRoles = roles.filter(r => {
+    const isSuperAdminRole = r.name === "Super Admin" || r.id === 0
+    return isSuperAdmin ? isSuperAdminRole : !isSuperAdminRole
+  })
+
   const stats = {
-    total:  users.length,
-    active: users.filter(u => u.status === "Active").length,
-    roles:  roles.length,
-    branches: branches.length,
+    total:  displayedUsers.length,
+    active: displayedUsers.filter(u => u.status === "Active").length,
+    roles:  displayedRoles.length,
+    branches: isSuperAdmin ? 1 : branches.length,
   }
 
   if (!mounted) return null
@@ -302,13 +348,13 @@ export default function UsersManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            User Management &amp; Access Control
+            System Users
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            पालिका र वडाका कर्मचारीहरूको पहुँच तथा profile व्यवस्थापन गर्नुहोस्।
+            पालिका र वडाका कर्मचारीहरूको प्रोफाइल व्यवस्थापन गर्नुहोस्।
           </p>
         </div>
-        {activeTab === "users" && (
+        {isAdmin && (
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shrink-0" onClick={openCreateUser}>
             <UserPlus className="w-4 h-4" /> + Create New Staff
           </Button>
@@ -330,28 +376,7 @@ export default function UsersManagementPage() {
         ))}
       </div>
 
-      {/* ── Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
-        {([
-          { key: "users",      label: "System Users",  Icon: UsersIcon },
-          { key: "categories", label: "Categories",    Icon: Tags },
-        ] as const).map(({ key, label, Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === key
-                ? "bg-white shadow-sm text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <Icon className="w-4 h-4" /> {label}
-          </button>
-        ))}
-      </div>
-
       {/* ══════════════════ TAB: SYSTEM USERS ══════════════════ */}
-      {activeTab === "users" && (
         <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 border-b">
@@ -503,91 +528,6 @@ export default function UsersManagementPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* ══════════════════ TAB: CATEGORIES ══════════════════ */}
-      {activeTab === "categories" && (
-        <div className="grid md:grid-cols-2 gap-6">
-
-          {/* ── Role / पद Panel */}
-          <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-purple-50 to-white">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <ShieldCheck className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-gray-800 text-sm">Role / पद</h2>
-                  <p className="text-xs text-muted-foreground">{roles.length} roles परिभाषित</p>
-                </div>
-              </div>
-              {isAdmin && (
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700 gap-1 text-xs h-8" onClick={openCreateRole}>
-                  <Plus className="w-3.5 h-3.5" /> नयाँ Role
-                </Button>
-              )}
-            </div>
-
-            <div className="divide-y">
-              {roles.map(r => (
-                <div key={r.id} className="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50/60 transition-colors">
-                  <span className={`mt-0.5 inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${r.color}`}>{r.name}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-600 line-clamp-2">{r.description}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {r.scope === "palika" ? "📌 पालिका स्तर" : "📍 वडा स्तर"}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <button onClick={() => openEditRole(r)} className="w-6 h-6 flex items-center justify-center rounded hover:bg-blue-50 text-blue-500"><Pencil className="w-3 h-3" /></button>
-                    {isAdmin && <button onClick={() => handleDeleteRole(r.id)} className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-red-400"><Trash2 className="w-3 h-3" /></button>}
-                  </div>
-                </div>
-              ))}
-              {roles.length === 0 && <p className="text-center py-8 text-sm text-muted-foreground">कुनै role छैन।</p>}
-            </div>
-          </div>
-
-          {/* ── शाखा / वडा Panel */}
-          <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-blue-50 to-white">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-gray-800 text-sm">शाखा / वडा</h2>
-                  <p className="text-xs text-muted-foreground">{branches.length} शाखा/वडा परिभाषित</p>
-                </div>
-              </div>
-              {isAdmin && (
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1 text-xs h-8" onClick={openCreateBranch}>
-                  <Plus className="w-3.5 h-3.5" /> नयाँ थप्नुहोस्
-                </Button>
-              )}
-            </div>
-
-            <div className="divide-y max-h-[420px] overflow-y-auto">
-              {branches.map(b => (
-                <div key={b.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${b.type === "ward" ? "bg-blue-100" : "bg-teal-100"}`}>
-                    {b.type === "ward" ? <MapPin className="w-3.5 h-3.5 text-blue-600" /> : <Building2 className="w-3.5 h-3.5 text-teal-600" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{b.name}</p>
-                    <p className="text-xs text-muted-foreground">{b.nameEn} · <span className={`font-medium ${b.type === "ward" ? "text-blue-600" : "text-teal-600"}`}>{b.type === "ward" ? "वडा" : "शाखा"}</span></p>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <button onClick={() => openEditBranch(b)} className="w-6 h-6 flex items-center justify-center rounded hover:bg-blue-50 text-blue-500"><Pencil className="w-3 h-3" /></button>
-                    {isAdmin && <button onClick={() => handleDeleteBranch(b.id)} className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-red-400"><Trash2 className="w-3 h-3" /></button>}
-                  </div>
-                </div>
-              ))}
-              {branches.length === 0 && <p className="text-center py-8 text-sm text-muted-foreground">कुनै शाखा/वडा छैन।</p>}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ══ MODAL: User Profile Modal (Multi-Tab) ══════════════════════════════════════════ */}
       {userModal && (
@@ -693,6 +633,13 @@ export default function UsersManagementPage() {
                             </div>
                           </SelectItem>
                         ))}
+                        {isSuperAdmin && (
+                          <SelectItem value="superadmin_role">
+                            <div className="flex items-center gap-2 text-red-600 font-bold">
+                              Super Admin <span className="text-muted-foreground text-[10px]">(Global)</span>
+                            </div>
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -797,9 +744,19 @@ export default function UsersManagementPage() {
               <p className="text-xs text-muted-foreground">Ensure all required fields (*) are filled.</p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setUserModal(false)}>Cancel</Button>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8" onClick={handleSaveUser}>
-                  {editUserId ? "Save Profile Changes" : "Create User"}
-                </Button>
+                {modalTab !== "docs" ? (
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8" onClick={() => {
+                    const tabs = ["info", "roles", "security", "docs"];
+                    const nextIndex = tabs.indexOf(modalTab) + 1;
+                    if (nextIndex < tabs.length) setModalTab(tabs[nextIndex] as any);
+                  }}>
+                    Next
+                  </Button>
+                ) : (
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8" onClick={handleSaveUser}>
+                    {editUserId ? "Save Profile Changes" : "Create User"}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -897,5 +854,13 @@ export default function UsersManagementPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function UsersManagementPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UsersManagementContent />
+    </Suspense>
   )
 }

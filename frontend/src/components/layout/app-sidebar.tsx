@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Sidebar,
   SidebarContent,
@@ -24,72 +26,93 @@ import {
   Building2,
   MapPin,
   ShieldCheck,
-  BrainCircuit
+  BrainCircuit,
+  Globe
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/routing"
 import { LanguageSwitcher } from "./language-switcher"
-
+import { useAuth } from "@/lib/auth-context"
 
 export function AppSidebar() {
   const t = useTranslations("Sidebar")
+  const { isSuperAdmin } = useAuth()
 
-  const navGroups = [
-    {
-      label: "Dashboard",
-      items: [
-        { title: "Dashboard", subtitle: "System Overview", url: "/", icon: Home, color: "text-blue-500" },
-      ]
-    },
-    {
-      label: "Organization",
-      items: [
-        { title: "Municipality", subtitle: "Office Profile", url: "/settings", icon: Building2, color: "text-indigo-500" },
-        { title: "Departments", subtitle: "Manage Branches", url: "/users?tab=categories", icon: Building2, color: "text-teal-500" },
-        { title: "Wards", subtitle: "Manage Wards", url: "/users?tab=categories", icon: MapPin, color: "text-green-500" },
-        { title: "Fiscal Year", subtitle: "Setup Fiscal Years", url: "/settings/fiscal-year", icon: Calendar, color: "text-yellow-500" },
-      ]
-    },
-    {
-      label: "User Management",
-      items: [
-        { title: "Users", subtitle: "System Users", url: "/users", icon: Users, color: "text-cyan-500" },
-        { title: "Roles", subtitle: "Access Control", url: "/users?tab=categories", icon: ShieldCheck, color: "text-purple-500" },
-        { title: "Permissions", subtitle: "Role Permissions", url: "/users?tab=categories", icon: ShieldCheck, color: "text-purple-400" },
-      ]
-    },
-    {
-      label: "Office",
-      items: [
-        { title: "Letter (पत्र लेखन)", subtitle: "Create Letter", url: "/patra-lekhan", icon: FileText, color: "text-blue-600" },
-        { title: "Application (निवेदन)", subtitle: "Write Application", url: "/nivedan-lekhan", icon: FileSignature, color: "text-red-500" },
-        { title: "Registration (दर्ता)", subtitle: "New Registration", url: "/darta", icon: FolderOpen, color: "text-purple-600" },
-        { title: "Dispatch (चलानी)", subtitle: "Outgoing Letter", url: "/chalani", icon: Send, color: "text-orange-500" },
-        { title: "e-Comment (टिप्पणी)", subtitle: "Internal Decisions", url: "/tippani", icon: MessageSquare, color: "text-green-600" },
-        { title: "e-Recommendation", subtitle: "Sifaris & Templates", url: "/sifaris/apply", icon: FileSignature, color: "text-amber-500" },
-      ]
-    },
-    {
-      label: "AI Assistant",
-      items: [
-        { title: "AI Assistant", subtitle: "Gov AI Agent", url: "/ai-chat", icon: Sparkles, color: "text-emerald-500" },
-      ]
-    },
-    {
-      label: "Reports & Analytics",
-      items: [
-        { title: "Reports", subtitle: "Data Visualization", url: "/reports", icon: BarChart, color: "text-indigo-500" },
-        { title: "GIS Mapping", subtitle: "Spatial Data", url: "/gis", icon: Map, color: "text-teal-500" },
-        { title: "Archive (अभिलेख)", subtitle: "Document Management", url: "/archive", icon: FolderOpen, color: "text-rose-500" },
-      ]
-    },
-    {
-      label: "System",
-      items: [
-        { title: "Settings", subtitle: "App Configuration", url: "/settings", icon: Settings, color: "text-gray-500" },
-      ]
-    }
-  ]
+  const navGroups = []
+
+  if (isSuperAdmin) {
+    navGroups.push(
+      {
+        label: t("federalManagement"),
+        items: [
+          { title: t("dashboard"), subtitle: t("globalOverview"), url: "/", icon: Home, color: "text-blue-500" },
+          { title: t("municipalities"), subtitle: t("tenantRegistry"), url: "/super-admin/tenants", icon: Globe, color: "text-indigo-500" },
+        ]
+      },
+      {
+        label: t("globalSettings"),
+        items: [
+          { title: t("globalUsers"), subtitle: t("superAdmins"), url: "/users", icon: Users, color: "text-cyan-500" },
+          { title: t("globalRoles"), subtitle: t("accessControl"), url: "/roles", icon: ShieldCheck, color: "text-purple-500" },
+        ]
+      }
+    )
+  } else {
+    navGroups.push(
+      {
+        label: t("dashboard"),
+        items: [
+          { title: t("dashboard"), subtitle: t("systemOverview"), url: "/", icon: Home, color: "text-blue-500" },
+        ]
+      },
+      {
+        label: t("organization"),
+        items: [
+          { title: t("branchesWards"), subtitle: t("manageOffices"), url: "/wards", icon: MapPin, color: "text-green-500" },
+          { title: t("fiscalYear"), subtitle: t("setupFiscalYears"), url: "/settings/fiscal-year", icon: Calendar, color: "text-yellow-500" },
+        ]
+      },
+      {
+        label: t("userManagement"),
+        items: [
+          { title: t("systemUsers"), subtitle: t("employeeProfiles"), url: "/users", icon: Users, color: "text-cyan-500" },
+          { title: t("rolesPermissions"), subtitle: t("accessControl"), url: "/roles", icon: ShieldCheck, color: "text-purple-500" },
+        ]
+      },
+      {
+        label: t("office"),
+        items: [
+          { title: t("letter"), subtitle: t("createLetter"), url: "/patra-lekhan", icon: FileText, color: "text-blue-600" },
+          { title: t("application"), subtitle: t("writeApplication"), url: "/nivedan-lekhan", icon: FileSignature, color: "text-red-500" },
+          { title: t("registration"), subtitle: t("newRegistration"), url: "/darta", icon: FolderOpen, color: "text-purple-600" },
+          { title: t("dispatch"), subtitle: t("outgoingLetter"), url: "/chalani", icon: Send, color: "text-orange-500" },
+          { title: t("eComment"), subtitle: t("internalDecisions"), url: "/tippani", icon: MessageSquare, color: "text-green-600" },
+          { title: t("eRecommendation"), subtitle: t("sifarisTemplates"), url: "/sifaris/apply", icon: FileSignature, color: "text-amber-500" },
+        ]
+      },
+      {
+        label: t("aiAssistant"),
+        items: [
+          { title: t("aiAssistant"), subtitle: t("govAiAgent"), url: "/ai-chat", icon: Sparkles, color: "text-emerald-500" },
+        ]
+      },
+      {
+        label: t("reportsAnalytics"),
+        items: [
+          { title: t("reports"), subtitle: t("dataVisualization"), url: "/reports", icon: BarChart, color: "text-indigo-500" },
+          { title: t("dartaChalaniReport"), subtitle: t("dartaChalaniReportSub"), url: "/reports/darta-chalani", icon: FileText, color: "text-blue-500" },
+          { title: t("gisMapping"), subtitle: t("spatialData"), url: "/gis", icon: Map, color: "text-teal-500" },
+          { title: t("archive"), subtitle: t("documentManagement"), url: "/archive", icon: FolderOpen, color: "text-rose-500" },
+        ]
+      },
+      {
+        label: t("system"),
+        items: [
+          { title: t("settings"), subtitle: t("appConfiguration"), url: "/settings", icon: Settings, color: "text-gray-500" },
+        ]
+      }
+    )
+  }
 
   return (
     <Sidebar className="border-r-0">

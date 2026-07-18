@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Printer, Save, FileText } from "lucide-react"
 import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
 import NepaliDate from "nepali-datetime"
+import { fetchApi } from "@/lib/api"
 
 export default function PatraLekhanPage() {
   const [formData, setFormData] = useState({
@@ -24,7 +25,57 @@ export default function PatraLekhanPage() {
 
   useEffect(() => {
     const today = new NepaliDate()
-    setFormData(prev => ({ ...prev, miti: today.format('YYYY-MM-DD') }))
+    
+    // Determine active fiscal year
+    let activeFyName = "२०८१/०८२"
+    const fyStore = typeof window !== 'undefined' ? localStorage.getItem("lgoms_fiscal_years") : null
+    if (fyStore) {
+      try {
+        const parsed = JSON.parse(fyStore)
+        const active = parsed.find((f: any) => f.isActive)
+        if (active) activeFyName = active.name
+      } catch {}
+    }
+
+    // Determine user ward
+    let ward = "0"
+    const userStore = typeof window !== 'undefined' ? localStorage.getItem("lgoms_user") : null
+    if (userStore) {
+      try {
+        const parsed = JSON.parse(userStore)
+        if (parsed.ward) ward = parsed.ward
+      } catch {}
+    }
+
+    // Determine default local count
+    let localCount = 0
+    const cached = typeof window !== 'undefined' ? localStorage.getItem("lgoms_chalanis") : null
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        localCount = parsed.length
+      } catch {}
+    }
+
+    const prefix = ward && ward !== "0" ? `W${ward}` : "P"
+    const defaultNo = `${activeFyName}-${prefix}-C-${localCount + 1}`
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      miti: today.format('YYYY-MM-DD'),
+      patraSankhya: activeFyName, 
+      chalaniNo: defaultNo 
+    }))
+
+    // Fetch live list to override if possible
+    fetchApi('/Chalani')
+      .then(data => {
+        if (Array.isArray(data)) {
+          const nextNo = `${activeFyName}-${prefix}-C-${data.length + 1}`
+          setFormData(prev => ({ ...prev, chalaniNo: nextNo }))
+        }
+      })
+      .catch(err => console.warn("Live chalani fetch failed for patra lekhan, using cache", err))
   }, [])
 
   const handleInputChange = (field: string, value: string) => {

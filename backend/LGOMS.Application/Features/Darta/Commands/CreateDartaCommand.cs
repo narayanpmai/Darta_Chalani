@@ -57,7 +57,8 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
             ReceivedLetterDate = request.ReceivedLetterDate,
             ReceivedLetterNumber = request.ReceivedLetterNumber,
             Remarks = request.Remarks,
-            EntryTime = request.EntryTime
+            EntryTime = request.EntryTime,
+            FiscalYearId = fiscalYearId
         };
 
         _context.Dartas.Add(entity);

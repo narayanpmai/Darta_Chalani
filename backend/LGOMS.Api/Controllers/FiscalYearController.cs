@@ -27,6 +27,33 @@ namespace LGOMS.Api.Controllers
                 .OrderByDescending(f => f.StartDate)
                 .ToListAsync();
 
+            if (fiscalYears.Count == 0)
+            {
+                var fy1 = new FiscalYear
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    Name = "२०८१/०८२",
+                    StartDate = new DateTime(2024, 7, 16),
+                    EndDate = new DateTime(2025, 7, 15),
+                    IsActive = true
+                };
+                var fy2 = new FiscalYear
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    Name = "२०८२/०८३",
+                    StartDate = new DateTime(2025, 7, 16),
+                    EndDate = new DateTime(2026, 7, 15),
+                    IsActive = false
+                };
+
+                _context.FiscalYears.AddRange(fy1, fy2);
+                await _context.SaveChangesAsync();
+
+                fiscalYears = new List<FiscalYear> { fy2, fy1 };
+            }
+
             return Ok(fiscalYears);
         }
 

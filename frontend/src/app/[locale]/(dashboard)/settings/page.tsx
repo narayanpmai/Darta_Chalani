@@ -1,15 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Building2, Save, Key, Globe, Database, CheckCircle2, Send, X, Plus } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
-export default function SettingsPage() {
+function SettingsContent() {
+  const { isAdmin } = useAuth()
   const [mounted, setMounted] = useState(false)
-  const [activeTab, setActiveTab] = useState("profile")
+  const searchParams = useSearchParams()
+  const defaultTab = searchParams.get("tab") || "profile"
+  const [activeTab, setActiveTab] = useState(defaultTab)
+
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (tab) setActiveTab(tab)
+  }, [searchParams])
   const [isSaved, setIsSaved] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -37,7 +47,10 @@ export default function SettingsPage() {
     originatingDepartments: ["Administration (प्रशासन)", "Planning (योजना)", "Finance (आर्थिक)"],
     
     // Letter Type & Branch Setup
-    letterTypes: ["परिपत्र (Circular)", "सूचना (Notice)", "निवेदन (Application)", "अन्य (Other)"]
+    letterTypes: ["परिपत्र (Circular)", "सूचना (Notice)", "निवेदन (Application)", "अन्य (Other)"],
+    
+    // File Categories for Chalani
+    fileCategories: ["वार्षिक बजेट", "कर्मचारी प्रशासन", "योजना तथा विकास", "राजस्व तथा कर", "सामाजिक सेवा", "अन्य"]
   })
 
   useEffect(() => {
@@ -52,6 +65,7 @@ export default function SettingsPage() {
           deliveryMethods: parsed.deliveryMethods ? (Array.isArray(parsed.deliveryMethods) ? parsed.deliveryMethods : parsed.deliveryMethods.split(",").map((s: string) => s.trim())) : prev.deliveryMethods,
           originatingDepartments: parsed.originatingDepartments ? (Array.isArray(parsed.originatingDepartments) ? parsed.originatingDepartments : parsed.originatingDepartments.split(",").map((s: string) => s.trim())) : prev.originatingDepartments,
           letterTypes: parsed.letterTypes ? (Array.isArray(parsed.letterTypes) ? parsed.letterTypes : parsed.letterTypes.split(",").map((s: string) => s.trim())) : prev.letterTypes,
+          fileCategories: parsed.fileCategories ? (Array.isArray(parsed.fileCategories) ? parsed.fileCategories : parsed.fileCategories.split(",").map((s: string) => s.trim())) : prev.fileCategories,
         }))
       } catch (e) {}
     }
@@ -67,14 +81,15 @@ export default function SettingsPage() {
       ...formData,
       deliveryMethods: formData.deliveryMethods.join(", "),
       originatingDepartments: formData.originatingDepartments.join(", "),
-      letterTypes: formData.letterTypes.join(", ")
+      letterTypes: formData.letterTypes.join(", "),
+      fileCategories: formData.fileCategories.join(", ")
     }
     localStorage.setItem("lgoms_settings", JSON.stringify(dataToSave))
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 3000)
   }
 
-  const renderDynamicArray = (fieldId: "deliveryMethods" | "originatingDepartments" | "letterTypes", label: string) => {
+  const renderDynamicArray = (fieldId: "deliveryMethods" | "originatingDepartments" | "letterTypes" | "fileCategories", label: string) => {
     return (
       <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
         <Label className="text-base font-semibold">{label}</Label>
@@ -82,6 +97,7 @@ export default function SettingsPage() {
           <div key={idx} className="flex gap-2 items-center">
             <Input 
               value={item} 
+              readOnly={!isAdmin}
               onChange={(e) => {
                 const newArr = [...formData[fieldId]];
                 newArr[idx] = e.target.value;
@@ -89,6 +105,7 @@ export default function SettingsPage() {
                 setIsSaved(false);
               }} 
             />
+            {isAdmin && (
             <Button 
               variant="ghost" 
               size="icon" 
@@ -101,8 +118,10 @@ export default function SettingsPage() {
             >
               <X className="h-4 w-4" />
             </Button>
+            )}
           </div>
         ))}
+        {isAdmin && (
         <Button 
           variant="outline" 
           size="sm" 
@@ -114,6 +133,7 @@ export default function SettingsPage() {
         >
           <Plus className="h-4 w-4" /> नयाँ थप्नुहोस् (Add New)
         </Button>
+        )}
       </div>
     )
   }
@@ -191,25 +211,25 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="tenantName">Municipality Name (Nepali)</Label>
-                    <Input id="tenantName" value={formData.tenantName} onChange={handleChange} />
+                    <Input id="" readOnly={!isAdmin} value={formData.tenantName} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenantNameEn">Municipality Name (English)</Label>
-                    <Input id="tenantNameEn" value={formData.tenantNameEn} onChange={handleChange} />
+                    <Input id="" readOnly={!isAdmin} value={formData.tenantNameEn} onChange={handleChange} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="province">Province</Label>
-                      <Input id="province" value={formData.province} onChange={handleChange} />
+                      <Input id="" readOnly={!isAdmin} value={formData.province} onChange={handleChange} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="district">District</Label>
-                      <Input id="district" value={formData.district} onChange={handleChange} />
+                      <Input id="" readOnly={!isAdmin} value={formData.district} onChange={handleChange} />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="contactEmail">Official Contact Email</Label>
-                    <Input id="contactEmail" type="email" value={formData.contactEmail} onChange={handleChange} />
+                    <Input id="" readOnly={!isAdmin} type="email" value={formData.contactEmail} onChange={handleChange} />
                   </div>
                 </CardContent>
               </>
@@ -225,11 +245,11 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="smsGatewayUrl">SMS Gateway URL</Label>
-                    <Input id="smsGatewayUrl" value={formData.smsGatewayUrl} onChange={handleChange} />
+                    <Input id="" readOnly={!isAdmin} value={formData.smsGatewayUrl} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="smsApiKey">SMS API Key</Label>
-                    <Input id="smsApiKey" type="password" value={formData.smsApiKey} onChange={handleChange} />
+                    <Input id="" readOnly={!isAdmin} type="password" value={formData.smsApiKey} onChange={handleChange} />
                   </div>
                 </CardContent>
               </>
@@ -247,12 +267,12 @@ export default function SettingsPage() {
                     <Label htmlFor="primaryColor">Primary Color (Hex Code)</Label>
                     <div className="flex gap-3 items-center">
                       <div className="w-10 h-10 rounded-md border shadow-sm" style={{ backgroundColor: formData.primaryColor }}></div>
-                      <Input id="primaryColor" value={formData.primaryColor} onChange={handleChange} className="max-w-[200px]" />
+                      <Input id="" readOnly={!isAdmin} value={formData.primaryColor} onChange={handleChange} className="max-w-[200px]" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="dateFormat">System Date Format</Label>
-                    <Input id="dateFormat" value={formData.dateFormat} onChange={handleChange} />
+                    <Input id="" readOnly={!isAdmin} value={formData.dateFormat} onChange={handleChange} />
                   </div>
                 </CardContent>
               </>
@@ -269,11 +289,11 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="backupFrequency">Automated Backup Frequency</Label>
-                      <Input id="backupFrequency" value={formData.backupFrequency} onChange={handleChange} />
+                      <Input id="" readOnly={!isAdmin} value={formData.backupFrequency} onChange={handleChange} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="retentionPeriod">Data Retention Period</Label>
-                      <Input id="retentionPeriod" value={formData.retentionPeriod} onChange={handleChange} />
+                      <Input id="" readOnly={!isAdmin} value={formData.retentionPeriod} onChange={handleChange} />
                     </div>
                   </div>
                 </CardContent>
@@ -298,11 +318,12 @@ export default function SettingsPage() {
               <>
                 <CardHeader>
                   <CardTitle>पत्रको किसिम र शाखा (Letter Type & Branch)</CardTitle>
-                  <CardDescription>Manage Letter Types and Departments/Branches.</CardDescription>
+                  <CardDescription>Manage Letter Types, Departments/Branches, and File Categories for Dispatch.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {renderDynamicArray("letterTypes", "पत्रको किसिम (Letter Types)")}
                   {renderDynamicArray("originatingDepartments", "शाखाहरू (Departments/Branches)")}
+                  {renderDynamicArray("fileCategories", "सम्बन्धित फाइल किसिम (File Categories for Dispatch)")}
                 </CardContent>
               </>
             )}
@@ -315,13 +336,23 @@ export default function SettingsPage() {
                   </span>
                 )}
               </div>
-              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
-                <Save className="h-4 w-4" /> Save Changes
-              </Button>
+              {isAdmin && (
+                <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+                  <Save className="h-4 w-4" /> Save Changes
+                </Button>
+              )}
             </CardFooter>
           </Card>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SettingsContent />
+    </Suspense>
   )
 }

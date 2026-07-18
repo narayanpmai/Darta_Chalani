@@ -39,17 +39,17 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Darta>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
-        modelBuilder.Entity<Chalani>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
-        modelBuilder.Entity<Tippani>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
-        modelBuilder.Entity<Sifaris>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
+        modelBuilder.Entity<Darta>().HasQueryFilter(x => x.TenantId == CurrentTenantId && (x.FiscalYearId == CurrentFiscalYearId || x.FiscalYearId == Guid.Empty));
+        modelBuilder.Entity<Chalani>().HasQueryFilter(x => x.TenantId == CurrentTenantId && (x.FiscalYearId == CurrentFiscalYearId || x.FiscalYearId == Guid.Empty));
+        modelBuilder.Entity<Tippani>().HasQueryFilter(x => x.TenantId == CurrentTenantId && (x.FiscalYearId == CurrentFiscalYearId || x.FiscalYearId == Guid.Empty));
+        modelBuilder.Entity<Sifaris>().HasQueryFilter(x => x.TenantId == CurrentTenantId && (x.FiscalYearId == CurrentFiscalYearId || x.FiscalYearId == Guid.Empty));
         modelBuilder.Entity<SifarisTemplate>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
-        modelBuilder.Entity<ArchiveDocument>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
+        modelBuilder.Entity<ArchiveDocument>().HasQueryFilter(x => x.TenantId == CurrentTenantId && (x.FiscalYearId == CurrentFiscalYearId || x.FiscalYearId == Guid.Empty));
         modelBuilder.Entity<ApplicationUser>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
         modelBuilder.Entity<FiscalYear>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
         modelBuilder.Entity<DocumentChunk>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
         modelBuilder.Entity<Ward>().HasQueryFilter(x => x.TenantId == CurrentTenantId);
-        modelBuilder.Entity<SequenceTracker>().HasQueryFilter(x => x.TenantId == CurrentTenantId && x.FiscalYearId == CurrentFiscalYearId);
+        modelBuilder.Entity<SequenceTracker>().HasQueryFilter(x => x.TenantId == CurrentTenantId && (x.FiscalYearId == CurrentFiscalYearId || x.FiscalYearId == Guid.Empty));
 
         // Add additional configurations/indexes here...
     }
@@ -75,8 +75,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             {
                 case EntityState.Added:
                 case EntityState.Modified:
-                    // Ensure the TenantId is always set securely from the service
-                    entry.Entity.TenantId = _tenantService.GetTenantId();
+                    // Ensure the TenantId is always set securely from the service if not explicitly set (e.g. during tenant creation)
+                    if (entry.Entity.TenantId == Guid.Empty)
+                    {
+                        entry.Entity.TenantId = _tenantService.GetTenantId();
+                    }
                     break;
             }
         }

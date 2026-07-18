@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { useRouter } from "next/navigation"
 
-export type UserRole = "Municipality Admin" | "Ward Chair" | "Operator"
+export type UserRole = "Super Admin" | "Municipality Admin" | "Ward Chair" | "Operator"
 
 export interface AuthUser {
   id: number
@@ -19,12 +19,14 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   isAdmin: boolean
+  isSuperAdmin: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
 // Demo users for local testing (until backend is connected)
 const DEMO_USERS: (AuthUser & { password: string })[] = [
+  { id: 0, name: "Super Admin", username: "superadmin", password: "admin123", role: "Super Admin" },
   { id: 1, name: "Admin User", username: "admin", password: "admin123", role: "Municipality Admin" },
   { id: 2, name: "Ram Bahadur", username: "ram_ward1", password: "ward123", role: "Ward Chair", ward: "1" },
   { id: 3, name: "Sita Sharma", username: "sita_op", password: "op123", role: "Operator", ward: "2" },
@@ -130,7 +132,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, isAdmin: user?.role === "Municipality Admin" }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      login, 
+      logout, 
+      isAdmin: user?.role === "Municipality Admin" || user?.role === "Super Admin",
+      isSuperAdmin: user?.role === "Super Admin"
+    }}>
       {children}
     </AuthContext.Provider>
   )

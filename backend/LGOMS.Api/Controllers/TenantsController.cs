@@ -1,6 +1,8 @@
 using LGOMS.Application.Features.Tenants.Commands;
+using LGOMS.Application.Features.Tenants.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace LGOMS.Api.Controllers;
@@ -21,5 +23,20 @@ public class TenantsController : ControllerBase
     {
         var tenantId = await _mediator.Send(command);
         return Ok(new { TenantId = tenantId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var tenants = await _mediator.Send(new GetTenantsQuery());
+        return Ok(tenants);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, UpdateTenantCommand command)
+    {
+        command.Id = id;
+        await _mediator.Send(command);
+        return Ok();
     }
 }

@@ -3,6 +3,21 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/a
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('lgoms_token') : null;
   
+  // Get active fiscal year ID from localStorage
+  let fiscalYearId = null;
+  if (typeof window !== 'undefined') {
+    const fyStore = localStorage.getItem("lgoms_fiscal_years");
+    if (fyStore) {
+      try {
+        const parsed = JSON.parse(fyStore);
+        const active = parsed.find((f: any) => f.isActive);
+        if (active) {
+          fiscalYearId = active.id;
+        }
+      } catch {}
+    }
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -11,6 +26,11 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   // Only add Authorization header if token exists
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Add Fiscal Year ID header if found
+  if (fiscalYearId) {
+    headers['X-Fiscal-Year-Id'] = fiscalYearId;
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {

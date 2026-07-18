@@ -1,9 +1,114 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { FileText, Send, AlertTriangle, FileSignature, FolderOpen, MessageSquare } from "lucide-react"
 import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { ActivityTimeline } from "@/components/dashboard/activity-timeline"
+import { fetchApi } from "@/lib/api"
+
+function toNepaliNumber(num: number | string): string {
+  const nepaliDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"]
+  return num
+    .toString()
+    .split("")
+    .map(digit => {
+      const parsed = parseInt(digit)
+      return isNaN(parsed) ? digit : nepaliDigits[parsed]
+    })
+    .join("")
+}
+
+function isToday(dateInput: any): boolean {
+  if (!dateInput) return false
+  try {
+    const d = new Date(dateInput)
+    const today = new Date()
+    return d.getDate() === today.getDate() &&
+           d.getMonth() === today.getMonth() &&
+           d.getFullYear() === today.getFullYear()
+  } catch {
+    return false
+  }
+}
 
 export default function Dashboard() {
+  const [counts, setCounts] = useState({
+    letters: 0,
+    lettersDraft: 0,
+    applications: 0,
+    applicationsApproved: 0,
+    dartas: 0,
+    dartasToday: 0,
+    chalanis: 0,
+    chalanisToday: 0,
+    tippanis: 0,
+    tippanisPending: 0,
+    sifaris: 0,
+    sifarisIssued: 0
+  })
+
+  const loadData = () => {
+    // 1. Fetch from local cache fallbacks
+    const cachedDarta = localStorage.getItem("lgoms_dartas")
+    const dartaList = cachedDarta ? JSON.parse(cachedDarta) : []
+    
+    const cachedChalani = localStorage.getItem("lgoms_chalanis")
+    const chalaniList = cachedChalani ? JSON.parse(cachedChalani) : []
+
+    const dTodayLocal = dartaList.filter((d: any) => isToday(d.registrationDate) || isToday(d.date)).length
+    const cTodayLocal = chalaniList.filter((c: any) => isToday(c.dispatchDate) || isToday(c.date)).length
+
+    setCounts(prev => ({
+      ...prev,
+      dartas: dartaList.length,
+      dartasToday: dTodayLocal,
+      chalanis: chalaniList.length,
+      chalanisToday: cTodayLocal
+    }))
+
+    // 2. Fetch live data from backend APIs
+    fetchApi('/Darta')
+      .then(data => {
+        if (Array.isArray(data)) {
+          const dToday = data.filter((d: any) => isToday(d.registrationDate)).length
+          setCounts(prev => ({ ...prev, dartas: data.length, dartasToday: dToday }))
+        }
+      })
+      .catch(() => {})
+
+    fetchApi('/Chalani')
+      .then(data => {
+        if (Array.isArray(data)) {
+          const cToday = data.filter((c: any) => isToday(c.dispatchDate)).length
+          setCounts(prev => ({ ...prev, chalanis: data.length, chalanisToday: cToday }))
+        }
+      })
+      .catch(() => {})
+
+    fetchApi('/Tippani')
+      .then(data => {
+        if (Array.isArray(data)) {
+          const pending = data.filter((t: any) => t.status === "Pending" || t.status === "Draft" || t.status === "विचाराधीन").length
+          setCounts(prev => ({ ...prev, tippanis: data.length, tippanisPending: pending }))
+        }
+      })
+      .catch(() => {})
+
+    fetchApi('/Sifaris')
+      .then(data => {
+        if (Array.isArray(data)) {
+          const issued = data.filter((s: any) => s.status === "Issued" || s.status === "Approved" || s.status === "जारी गरियो").length
+          setCounts(prev => ({ ...prev, sifaris: data.length, sifarisIssued: issued }))
+        }
+      })
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
       <div className="flex items-center justify-between border-b pb-4">
@@ -24,8 +129,8 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-800">४५</div>
-                <p className="text-xs font-medium mt-1 text-orange-600">१२ मस्यौदा (Drafts)</p>
+                <div className="text-2xl font-bold text-slate-800">{toNepaliNumber(counts.letters)}</div>
+                <p className="text-xs font-medium mt-1 text-orange-600">{toNepaliNumber(counts.lettersDraft)} मस्यौदा (Drafts)</p>
               </CardContent>
             </Card>
             
@@ -38,8 +143,8 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-800">२८</div>
-                <p className="text-xs font-medium mt-1 text-green-600">१५ स्वीकृत (Approved)</p>
+                <div className="text-2xl font-bold text-slate-800">{toNepaliNumber(counts.applications)}</div>
+                <p className="text-xs font-medium mt-1 text-green-600">{toNepaliNumber(counts.applicationsApproved)} स्वीकृत (Approved)</p>
               </CardContent>
             </Card>
 
@@ -52,8 +157,8 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-800">१२४</div>
-                <p className="text-xs font-medium mt-1 text-blue-600">आजको दर्ता: +१२</p>
+                <div className="text-2xl font-bold text-slate-800">{toNepaliNumber(counts.dartas)}</div>
+                <p className="text-xs font-medium mt-1 text-blue-600">आजको दर्ता: +{toNepaliNumber(counts.dartasToday)}</p>
               </CardContent>
             </Card>
 
@@ -66,8 +171,8 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-800">८९</div>
-                <p className="text-xs font-medium mt-1 text-blue-600">आजको चलानी: +५</p>
+                <div className="text-2xl font-bold text-slate-800">{toNepaliNumber(counts.chalanis)}</div>
+                <p className="text-xs font-medium mt-1 text-blue-600">आजको चलानी: +{toNepaliNumber(counts.chalanisToday)}</p>
               </CardContent>
             </Card>
 
@@ -80,8 +185,8 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-800">१४</div>
-                <p className="text-xs font-medium mt-1 text-orange-600">५ विचाराधीन (Pending)</p>
+                <div className="text-2xl font-bold text-slate-800">{toNepaliNumber(counts.tippanis)}</div>
+                <p className="text-xs font-medium mt-1 text-orange-600">{toNepaliNumber(counts.tippanisPending)} विचाराधीन (Pending)</p>
               </CardContent>
             </Card>
 
@@ -94,8 +199,8 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-800">५६</div>
-                <p className="text-xs font-medium mt-1 text-green-600">३० जारी गरियो (Issued)</p>
+                <div className="text-2xl font-bold text-slate-800">{toNepaliNumber(counts.sifaris)}</div>
+                <p className="text-xs font-medium mt-1 text-green-600">{toNepaliNumber(counts.sifarisIssued)} जारी गरियो (Issued)</p>
               </CardContent>
             </Card>
           </div>

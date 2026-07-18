@@ -9,23 +9,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Plus, CheckCircle2 } from "lucide-react"
 import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
+import { fetchApi } from "@/lib/api"
 
 export default function FiscalYearSettingsPage() {
   const [fiscalYears, setFiscalYears] = useState<any[]>([])
   const [newFy, setNewFy] = useState({ name: "", startDate: "", endDate: "" })
   const [loading, setLoading] = useState(false)
 
-  // Note: We use mock data for now in case the DB connection fails
   useEffect(() => {
     fetchFiscalYears()
   }, [])
 
   const fetchFiscalYears = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/fiscalyear")
-      if (res.ok) {
-        const data = await res.json()
+      const data = await fetchApi("/fiscalyear")
+      if (Array.isArray(data) && data.length > 0) {
         setFiscalYears(data)
+        localStorage.setItem("lgoms_fiscal_years", JSON.stringify(data))
       } else {
         loadLocalData()
       }
@@ -61,17 +61,12 @@ export default function FiscalYearSettingsPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/fiscalyear", {
+      await fetchApi("/fiscalyear", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newFy)
       })
-      if (res.ok) {
-        await fetchFiscalYears()
-        setNewFy({ name: "", startDate: "", endDate: "" })
-      } else {
-        saveLocal(newItem)
-      }
+      await fetchFiscalYears()
+      setNewFy({ name: "", startDate: "", endDate: "" })
     } catch {
       saveLocal(newItem)
     }
@@ -88,15 +83,11 @@ export default function FiscalYearSettingsPage() {
   const handleSetActive = async (id: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`http://localhost:5000/api/fiscalyear/${id}/set-active`, {
+      await fetchApi(`/fiscalyear/${id}/set-active`, {
         method: "POST"
       })
-      if (res.ok) {
-        await fetchFiscalYears()
-        window.location.reload()
-      } else {
-        setActiveLocal(id)
-      }
+      await fetchFiscalYears()
+      window.location.reload()
     } catch {
       setActiveLocal(id)
     }

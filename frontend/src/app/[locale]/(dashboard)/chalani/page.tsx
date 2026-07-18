@@ -15,6 +15,33 @@ import { Badge } from "@/components/ui/badge"
 import { Link } from "@/i18n/routing"
 import { fetchApi } from "@/lib/api"
 
+// Helper: reads fileCategories from settings and renders SelectItems
+function FileCategorySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const getCategories = (): string[] => {
+    try {
+      const stored = localStorage.getItem("lgoms_settings")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed.fileCategories) && parsed.fileCategories.length > 0) return parsed.fileCategories
+        if (typeof parsed.fileCategories === "string" && parsed.fileCategories.trim())
+          return parsed.fileCategories.split(",").map((s: string) => s.trim()).filter(Boolean)
+      }
+    } catch {}
+    return ["\u0935\u093e\u0930\u094d\u0937\u093f\u0915 \u092c\u091c\u0947\u091f", "\u0915\u0930\u094d\u092e\u091a\u093e\u0930\u0940 \u092a\u094d\u0930\u0936\u093e\u0938\u0928", "\u092f\u094b\u091c\u0928\u093e \u0924\u0925\u093e \u0935\u093f\u0915\u093e\u0938", "\u0930\u093e\u091c\u0938\u094d\u0935 \u0924\u0925\u093e \u0915\u0930", "\u0938\u093e\u092e\u093e\u091c\u093f\u0915 \u0938\u0947\u0935\u093e", "\u0905\u0928\u094d\u092f"]
+  }
+  const cats = getCategories()
+  return (
+    <Select value={value} onValueChange={(v: string | null) => { if (v) onChange(v) }}>
+      <SelectTrigger className="border-slate-300">
+        <SelectValue placeholder="\u092b\u093e\u0907\u0932 \u0915\u093f\u0938\u093f\u092e \u091b\u093e\u0928\u094d\u0928\u0941\u0939\u094b\u0938\u094d..." />
+      </SelectTrigger>
+      <SelectContent>
+        {cats.map((cat, i) => <SelectItem key={i} value={cat}>{cat}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  )
+}
+
 export default function ChalaniPage() {
   const { user } = useAuth()
   const [viewMode, setViewMode] = useState<"list" | "form">("list")
@@ -23,6 +50,7 @@ export default function ChalaniPage() {
   const [activeFy, setActiveFy] = useState("")
   const [chalaniNo, setChalaniNo] = useState("")
   const [miti, setMiti] = useState("")
+  const [editId, setEditId] = useState<string | null>(null)
 
   // Form State
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -34,20 +62,16 @@ export default function ChalaniPage() {
     recipientAddress: "",
     remarks: "",
     recipientEmail: "",
-    receivingBranch: "",
-    approvalStatus: "स्वीकृत",
+    tokAdeshPerson: "",
+    approvalStatus: "प्रक्रियामा",
     cc: "",
     relatedFile: "",
     alertEmail: false,
     alertSms: false
   })
 
-  // Dummy List Data
-  const [chalaniList, setChalaniList] = useState([
-    { id: 1, chalaniNo: "२०८२/०८३-P-C-1001", receiver: "जिल्ला प्रशासन कार्यालय", subject: "नागरिकता सिफारिस", method: "Physical", status: "स्वीकृत" },
-    { id: 2, chalaniNo: "२०८२/०८३-P-C-1002", receiver: "कृषि मन्त्रालय", subject: "मलखाद माग सम्बन्धमा", method: "Email", status: "प्रक्रियामा" },
-    { id: 3, chalaniNo: "२०८२/०८३-P-C-1003", receiver: "वडा नम्बर ५", subject: "बजेट विनियोजन जानकारी", method: "System", status: "स्वीकृत" },
-  ])
+  // Cache/List Data
+  const [chalaniList, setChalaniList] = useState<any[]>([])
 
   useEffect(() => {
     // 1. Fetch Fiscal Year
@@ -63,32 +87,70 @@ export default function ChalaniPage() {
       setActiveFy("२०८२/०८३")
       setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
     }
+
+    // Load initial list from cache
+    const cached = localStorage.getItem("lgoms_chalanis")
+    if (cached) {
+      try {
+        setChalaniList(JSON.parse(cached))
+      } catch {}
+    }
   }, [])
 
   useEffect(() => {
-    setChalaniNo("स्वचालित (Auto Generated)")
-  }, [activeFy, user, viewMode])
+    if (activeFy && viewMode === "form" && !editId) {
+      const prefix = user?.ward && user.ward !== "0" 
+        ? `W${user.ward}` 
+        : "P";
+      setChalaniNo(`${activeFy}-${prefix}-C-${chalaniList.length + 1}`)
+    }
+  }, [activeFy, user, viewMode, chalaniList, editId])
 
-  // Fetch Chalani list from backend API
+  // Sync to local storage
+  useEffect(() => {
+    if (chalaniList.length > 0) {
+      localStorage.setItem("lgoms_chalanis", JSON.stringify(chalaniList))
+    }
+  }, [chalaniList])
+
+  // Fetch Chalani list from backend API with local cache fallback
   useEffect(() => {
     if (viewMode === "list") {
       setIsSubmitting(true);
       fetchApi('/Chalani')
         .then((data) => {
-          if (Array.isArray(data)) {
+          if (Array.isArray(data) && data.length > 0) {
              const formattedList = data.map(item => ({
                id: item.id,
-               chalaniNo: item.dispatchNumber,
+               chalaniNo: item.chalaniNumber || item.dispatchNumber,
+               miti: item.miti,
+               letterDate: item.dispatchDate,
+               recipientName: item.receiverName,
                receiver: item.receiverName,
+               recipientAddress: item.receiverAddress,
+               remarks: item.remarks,
                subject: item.subject,
-               method: "Physical",
-               status: item.status || "स्वीकृत"
+               method: item.deliveryMethod || "Physical",
+               status: item.status || "स्वीकृत",
+               relatedFile: item.attachmentUrl,
+               tokAdeshPerson: item.orderOrDecision
              }));
              setChalaniList(formattedList);
+             localStorage.setItem("lgoms_chalanis", JSON.stringify(formattedList));
+          } else if (Array.isArray(data) && data.length === 0) {
+             // Keep cache if backend has no records
+             const cached = localStorage.getItem("lgoms_chalanis")
+             if (cached) {
+               try { setChalaniList(JSON.parse(cached)) } catch {}
+             }
           }
         })
         .catch(err => {
-          console.error("Failed to fetch chalani list:", err);
+          console.error("Failed to fetch chalani list, using cache:", err);
+          const cached = localStorage.getItem("lgoms_chalanis")
+          if (cached) {
+            try { setChalaniList(JSON.parse(cached)) } catch {}
+          }
         })
         .finally(() => {
           setIsSubmitting(false);
@@ -96,8 +158,59 @@ export default function ChalaniPage() {
     }
   }, [viewMode])
 
+  const handleEdit = async (item: any) => {
+    setIsSubmitting(true);
+    const localCached = chalaniList.find(x => x.id === item.id);
+    const baseObj = localCached || item;
+
+    try {
+      const data = await fetchApi(`/Chalani/${item.id}`);
+      setFormData({
+        subject: data.subject || baseObj.subject || "",
+        letterType: data.letterType || baseObj.letterType || "",
+        letterDate: data.dispatchDate || baseObj.letterDate || "",
+        recipientName: data.receiverName || baseObj.recipientName || baseObj.receiver || "",
+        recipientAddress: data.receiverAddress || baseObj.recipientAddress || "",
+        remarks: data.remarks || baseObj.remarks || "",
+        recipientEmail: data.recipientEmail || baseObj.recipientEmail || "",
+        tokAdeshPerson: data.orderOrDecision || baseObj.tokAdeshPerson || "",
+        approvalStatus: data.status || baseObj.status || "स्वीकृत",
+        cc: data.cc || baseObj.cc || "",
+        relatedFile: data.attachmentUrl || baseObj.relatedFile || "",
+        alertEmail: data.alertEmail || false,
+        alertSms: data.alertSms || false
+      });
+      setMiti(data.miti || baseObj.miti || miti);
+      setChalaniNo(data.chalaniNumber || data.dispatchNumber || baseObj.chalaniNo);
+      setEditId(item.id);
+      setViewMode("form");
+    } catch (err) {
+      console.warn("Failed to fetch full Chalani item, using local state", err);
+      setFormData({
+        subject: baseObj.subject || "",
+        letterType: baseObj.letterType || "",
+        letterDate: baseObj.letterDate || "",
+        recipientName: baseObj.recipientName || baseObj.receiver || "",
+        recipientAddress: baseObj.recipientAddress || "",
+        remarks: baseObj.remarks || "",
+        recipientEmail: baseObj.recipientEmail || "",
+        tokAdeshPerson: baseObj.tokAdeshPerson || "",
+        approvalStatus: baseObj.status || "स्वीकृत",
+        cc: baseObj.cc || "",
+        relatedFile: baseObj.relatedFile || "",
+        alertEmail: false,
+        alertSms: false
+      });
+      setChalaniNo(baseObj.chalaniNo);
+      setEditId(item.id);
+      setViewMode("form");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const handleDispatch = async () => {
-    if (!formData.recipientName || !formData.recipientAddress || !formData.subject || !formData.receivingBranch) {
+    if (!formData.recipientName || !formData.recipientAddress || !formData.subject) {
       alert("कृपया सबै अनिवार्य (*) विवरणहरू भर्नुहोस्।")
       return
     }
@@ -112,19 +225,101 @@ export default function ChalaniPage() {
         ReceiverName: formData.recipientName,
         Subject: formData.subject,
         Status: formData.approvalStatus,
-        Department: formData.receivingBranch,
+        TokAdeshPerson: formData.tokAdeshPerson,
         Remarks: formData.remarks
       };
 
-      const result = await fetchApi('/Chalani', {
-        method: 'POST',
-        body: JSON.stringify(command)
-      });
+      let resultId: string = "";
+      try {
+        if (editId) {
+          // Edit mode
+          try {
+            await fetchApi(`/Chalani/${editId}`, {
+              method: 'PUT',
+              body: JSON.stringify(command)
+            });
+            resultId = editId;
+          } catch (putErr) {
+            console.warn("PUT failed, updating local state", putErr);
+            resultId = editId;
+          }
+          
+          const localItem = {
+            id: editId,
+            chalaniNo: chalaniNo,
+            miti: miti,
+            letterDate: formData.letterDate,
+            recipientName: formData.recipientName,
+            receiver: formData.recipientName,
+            recipientAddress: formData.recipientAddress,
+            remarks: formData.remarks,
+            subject: formData.subject,
+            method: "Physical",
+            status: formData.approvalStatus,
+            relatedFile: formData.relatedFile,
+            tokAdeshPerson: formData.tokAdeshPerson
+          };
+          setChalaniList(prev => prev.map(u => u.id === editId ? localItem : u));
+        } else {
+          // Create mode
+          const result = await fetchApi('/Chalani', {
+            method: 'POST',
+            body: JSON.stringify(command)
+          });
+          resultId = result.id;
+        }
+        
+        // Refetch list after successful backend operation
+        const freshData = await fetchApi('/Chalani');
+        if (Array.isArray(freshData)) {
+          setChalaniList(freshData.map(item => ({
+            id: item.id,
+            chalaniNo: item.chalaniNumber || item.dispatchNumber,
+            miti: item.miti,
+            letterDate: item.dispatchDate,
+            recipientName: item.receiverName,
+            receiver: item.receiverName,
+            recipientAddress: item.receiverAddress,
+            remarks: item.remarks,
+            subject: item.subject,
+            method: item.deliveryMethod || "Physical",
+            status: item.status || "स्वीकृत",
+            relatedFile: item.attachmentUrl,
+            tokAdeshPerson: item.orderOrDecision
+          })));
+        }
+      } catch (backendError) {
+        console.warn("Backend Chalani POST/PUT failed, using local state", backendError);
+        resultId = editId || Date.now().toString();
+        
+        const localItem = {
+          id: resultId,
+          chalaniNo: chalaniNo,
+          miti: miti,
+          letterDate: formData.letterDate,
+          recipientName: formData.recipientName,
+          receiver: formData.recipientName,
+          recipientAddress: formData.recipientAddress,
+          remarks: formData.remarks,
+          subject: formData.subject,
+          method: "Physical",
+          status: formData.approvalStatus,
+          relatedFile: formData.relatedFile,
+          tokAdeshPerson: formData.tokAdeshPerson
+        };
+
+        if (editId) {
+          setChalaniList(prev => prev.map(u => u.id === editId ? localItem : u));
+        } else {
+          setChalaniList(prev => [...prev, localItem]);
+        }
+      }
       
-      alert("चलानी सफल भयो! नयाँ चलानी ID: " + result.id)
+      alert(editId ? "चलानी विवरण सम्पादन गरियो!" : "चलानी सफल भयो! नयाँ चलानी ID: " + resultId)
       setViewMode("list")
+      setEditId(null)
       setFormData({
-        subject: "", letterType: "", letterDate: "", recipientName: "", recipientAddress: "", remarks: "", recipientEmail: "", receivingBranch: "", approvalStatus: "स्वीकृत", cc: "", relatedFile: "", alertEmail: false, alertSms: false
+        subject: "", letterType: "", letterDate: "", recipientName: "", recipientAddress: "", remarks: "", recipientEmail: "", tokAdeshPerson: "", approvalStatus: "प्रक्रियामा", cc: "", relatedFile: "", alertEmail: false, alertSms: false
       })
     } catch (error: any) {
       alert("चलानी गर्न असफल: " + error.message)
@@ -136,7 +331,7 @@ export default function ChalaniPage() {
   const handleClear = () => {
     if(confirm("तपाईं फारमका सबै विवरणहरू खाली गर्न चाहनुहुन्छ?")) {
       setFormData({
-        subject: "", letterType: "", letterDate: "", recipientName: "", recipientAddress: "", remarks: "", recipientEmail: "", receivingBranch: "", approvalStatus: "स्वीकृत", cc: "", relatedFile: "", alertEmail: false, alertSms: false
+        subject: "", letterType: "", letterDate: "", recipientName: "", recipientAddress: "", remarks: "", recipientEmail: "", tokAdeshPerson: "", approvalStatus: "प्रक्रियामा", cc: "", relatedFile: "", alertEmail: false, alertSms: false
       })
     }
   }
@@ -146,7 +341,7 @@ export default function ChalaniPage() {
       <div className="flex items-center justify-between border-b pb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-800">
-            {viewMode === "list" ? "चलानी किताब (Chalani Register)" : `नयाँ चलानी (ई-चलानी)`}
+            {viewMode === "list" ? "चलानी किताब (Chalani Register)" : (editId ? `चलानी सम्पादन (चलानी नं: ${chalaniNo})` : `नयाँ चलानी (ई-चलानी)`)}
           </h1>
           <p className="text-muted-foreground mt-1">
             {viewMode === "list" ? "कार्यालयबाट पठाइएका पत्रहरूको चलानी विवरण" : "नयाँ पत्र चलानी गर्न तलको फारम भर्नुहोस्"}
@@ -154,11 +349,11 @@ export default function ChalaniPage() {
         </div>
         <div>
           {viewMode === "list" ? (
-            <Button onClick={() => setViewMode("form")} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex gap-2">
+            <Button onClick={() => { setEditId(null); setFormData({ subject: "", letterType: "", letterDate: "", recipientName: "", recipientAddress: "", remarks: "", recipientEmail: "", tokAdeshPerson: "", approvalStatus: "प्रक्रियामा", cc: "", relatedFile: "", alertEmail: false, alertSms: false }); setViewMode("form"); }} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex gap-2">
               <Plus className="h-4 w-4" /> नयाँ चलानी
             </Button>
           ) : (
-            <Button onClick={() => setViewMode("list")} variant="outline" className="flex gap-2">
+            <Button onClick={() => { setViewMode("list"); setEditId(null); }} variant="outline" className="flex gap-2">
               <ListIcon className="h-4 w-4" /> चलानी सूची
             </Button>
           )}
@@ -181,7 +376,18 @@ export default function ChalaniPage() {
             <TableBody>
               {chalaniList.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
-                  <TableCell className="font-medium text-blue-600">{item.chalaniNo}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.status === "प्रक्रियामा" ? (
+                      <button 
+                        onClick={() => handleEdit(item)}
+                        className="text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1"
+                      >
+                        {item.chalaniNo}
+                      </button>
+                    ) : (
+                      <span className="text-slate-500 font-medium">{item.chalaniNo}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{item.receiver}</TableCell>
                   <TableCell>
                     <div className="font-medium truncate max-w-[200px]">{item.subject}</div>
@@ -222,8 +428,8 @@ export default function ChalaniPage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-blue-700">चलानी नम्बर <span className="text-red-500">*</span></Label>
                     <Input 
-                      disabled 
                       value={chalaniNo} 
+                      onChange={(e) => setChalaniNo(e.target.value)}
                       className="border-blue-300 bg-blue-50/50 text-blue-800 font-medium"
                     />
                   </div>
@@ -324,21 +530,16 @@ export default function ChalaniPage() {
                   </div>
                 </div>
 
-                {/* Row 6: Receiving Branch & CC */}
+                {/* Row 6: Tok/Adesh & CC */}
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">पत्र बुज्ने शाखा <span className="text-red-500">*</span></Label>
-                    <Select value={formData.receivingBranch} onValueChange={(v) => setFormData({...formData, receivingBranch: v || ""})}>
-                      <SelectTrigger className="border-slate-300">
-                        <SelectValue placeholder="शाखा छान्नुहोस्..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">प्रशासन शाखा</SelectItem>
-                        <SelectItem value="planning">योजना शाखा</SelectItem>
-                        <SelectItem value="finance">आर्थिक प्रशासन</SelectItem>
-                        <SelectItem value="education">शिक्षा शाखा</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-sm font-medium">तोक/आदेश <span className="text-slate-500 text-xs">(तोक लगाउने व्यक्ति)</span></Label>
+                    <Input
+                      value={formData.tokAdeshPerson}
+                      onChange={(e) => setFormData({...formData, tokAdeshPerson: e.target.value})}
+                      placeholder="तोक लगाउने व्यक्तिको नाम..."
+                      className="border-slate-300"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">बोधार्थ (CC)</Label>
@@ -351,19 +552,10 @@ export default function ChalaniPage() {
                   </div>
                 </div>
 
-                {/* Row 7: Related File */}
+                {/* Row 7: Related File - settings driven */}
                 <div className="space-y-2 w-1/2 pr-3">
-                  <Label className="text-sm font-medium">सम्बन्धित फाइल (ऐच्छिक)</Label>
-                  <Select value={formData.relatedFile} onValueChange={(v) => setFormData({...formData, relatedFile: v || ""})}>
-                    <SelectTrigger className="border-slate-300">
-                      <SelectValue placeholder="फाइल छान्नुहोस्..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="file1">फाइल नं. १ - बजेट विनियोजन</SelectItem>
-                      <SelectItem value="file2">फाइल नं. २ - कर्मचारी प्रशासन</SelectItem>
-                      <SelectItem value="none">कुनै पनि होइन</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-sm font-medium">सम्बन्धित फाइल किसिम (ऐच्छिक)</Label>
+                  <FileCategorySelect value={formData.relatedFile} onChange={(v) => setFormData({...formData, relatedFile: v})} />
                 </div>
 
               </CardContent>

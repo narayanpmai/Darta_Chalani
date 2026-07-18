@@ -61,7 +61,8 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
             Remarks = request.Remarks,
             PeonBookNumber = request.PeonBookNumber,
             DispatchTime = request.DispatchTime,
-            OrderOrDecision = request.OrderOrDecision
+            OrderOrDecision = request.OrderOrDecision,
+            FiscalYearId = fiscalYearId
         };
 
         _context.Chalanis.Add(entity);
