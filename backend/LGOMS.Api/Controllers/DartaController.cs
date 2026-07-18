@@ -36,4 +36,12 @@ public class DartaController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetList()
+    {
+        var query = new GetDartaListQuery();
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
 }

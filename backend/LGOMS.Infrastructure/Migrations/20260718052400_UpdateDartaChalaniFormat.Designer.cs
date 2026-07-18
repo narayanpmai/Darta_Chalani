@@ -3,6 +3,7 @@ using System;
 using LGOMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using Pgvector;
 namespace LGOMS.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260718052400_UpdateDartaChalaniFormat")]
+    partial class UpdateDartaChalaniFormat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,9 +163,6 @@ namespace LGOMS.Infrastructure.Migrations
                     b.Property<DateTime>("DispatchDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DispatchTime")
-                        .HasColumnType("text");
-
                     b.Property<Guid>("FiscalYearId")
                         .HasColumnType("uuid");
 
@@ -173,14 +173,8 @@ namespace LGOMS.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("OrderOrDecision")
-                        .HasColumnType("text");
-
                     b.Property<string>("OriginatingDepartment")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PeonBookNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("ReceiverAddress")
@@ -236,9 +230,6 @@ namespace LGOMS.Infrastructure.Migrations
 
                     b.Property<string>("DartaNumber")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EntryTime")
                         .HasColumnType("text");
 
                     b.Property<Guid>("FiscalYearId")

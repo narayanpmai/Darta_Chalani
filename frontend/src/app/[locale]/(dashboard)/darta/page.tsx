@@ -11,6 +11,8 @@ import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
 import { aiAgentService } from "@/services/aiAgentService"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect } from "react"
+import NepaliDate from "nepali-datetime"
+import { getDefaultDateForFiscalYear } from "@/lib/fiscal-year-utils"
 
 export default function DartaPage() {
   const { user } = useAuth()
@@ -21,9 +23,13 @@ export default function DartaPage() {
     sender: "",
     subject: "",
     department: "",
-    priority: ""
+    priority: "",
+    receivedLetterDate: "",
+    receivedLetterNumber: "",
+    remarks: "",
+    entryTime: ""
   })
-  const [miti, setMiti] = useState("2082-04-12")
+  const [miti, setMiti] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Load initial settings and sequences
@@ -33,9 +39,13 @@ export default function DartaPage() {
     if (fyStore) {
       const parsed = JSON.parse(fyStore)
       const active = parsed.find((f: any) => f.isActive)
-      if (active) setActiveFy(active.name)
+      if (active) {
+        setActiveFy(active.name)
+        setMiti(getDefaultDateForFiscalYear(active.name))
+      }
     } else {
       setActiveFy("२०८२/०८३") // fallback
+      setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
     }
   }, [])
 
@@ -68,22 +78,24 @@ export default function DartaPage() {
       const cleanJson = response.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanJson);
 
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         sender: parsed.SenderName || "शिक्षा विकास तथा समन्वय इकाई",
         subject: parsed.Subject || "शिक्षक दरबन्दी मिलान सम्बन्धमा।",
         department: (parsed.SuggestedDepartment?.toLowerCase().includes("education") || parsed.SuggestedDepartment?.includes("शिक्षा")) ? "education" : "admin",
         priority: "urgent"
-      })
+      }))
       setFileStatus("done")
     } catch (error) {
       console.error("AI Extraction Error:", error);
       // Fallback if AI fails (e.g. invalid JSON or server error)
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         sender: "शिक्षा विकास तथा समन्वय इकाई",
         subject: "शिक्षक दरबन्दी मिलान सम्बन्धमा।",
         department: "education",
         priority: "urgent"
-      })
+      }))
       setFileStatus("done")
     }
   }
@@ -106,7 +118,11 @@ export default function DartaPage() {
         senderName: formData.sender,
         subject: formData.subject,
         forwardedToDepartment: formData.department,
-        priority: formData.priority || "Normal"
+        priority: formData.priority || "Normal",
+        receivedLetterDate: formData.receivedLetterDate,
+        receivedLetterNumber: formData.receivedLetterNumber,
+        remarks: formData.remarks,
+        entryTime: formData.entryTime
       }
 
       const res = await fetch(`${apiUrl}/Darta`, {
@@ -183,6 +199,26 @@ export default function DartaPage() {
                   className={fileStatus === "done" ? "border-green-500 bg-green-50/50" : ""}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="received-date">प्राप्त पत्रको मिति</Label>
+                  <NepaliDatePickerComponent 
+                    id="received-date" 
+                    value={formData.receivedLetterDate} 
+                    onChange={(val) => setFormData({...formData, receivedLetterDate: val || ""})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="received-number">प्राप्त पत्र संख्या / च.नं.</Label>
+                  <Input 
+                    id="received-number" 
+                    placeholder="पत्र संख्या" 
+                    value={formData.receivedLetterNumber}
+                    onChange={(e) => setFormData({...formData, receivedLetterNumber: e.target.value})}
+                  />
+                </div>
+              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="subject">विषय</Label>
@@ -223,6 +259,25 @@ export default function DartaPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="entry-time">दाखिला समय</Label>
+                  <Input 
+                    id="entry-time" 
+                    type="time"
+                    value={formData.entryTime}
+                    onChange={(e) => setFormData({...formData, entryTime: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="remarks">कैफियत</Label>
+                <Input 
+                  id="remarks" 
+                  placeholder="केही कैफियत भएमा लेख्नुहोस्" 
+                  value={formData.remarks}
+                  onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                />
               </div>
             </CardContent>
           </Card>

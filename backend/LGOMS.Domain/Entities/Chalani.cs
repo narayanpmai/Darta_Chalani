@@ -17,4 +17,11 @@ public class Chalani : BaseEntity, IMustHaveTenant, IFiscalYearAware
     public string OriginatingDepartment { get; set; } = string.Empty;
     public string DeliveryMethod { get; set; } = "Physical";
     public string Status { get; set; } = "Dispatched";
+    
+    public string? ReferenceLetterNumber { get; set; }
+    public string? Remarks { get; set; }
+    
+    public string? PeonBookNumber { get; set; }
+    public string? DispatchTime { get; set; }
+    public string? OrderOrDecision { get; set; }
 }

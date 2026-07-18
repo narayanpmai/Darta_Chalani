@@ -14,6 +14,10 @@ public class CreateDartaCommand : IRequest<Guid>
     public string? AttachmentUrl { get; set; }
     public string? ForwardedToDepartment { get; set; }
     public string Priority { get; set; } = "Normal";
+    public string? ReceivedLetterDate { get; set; }
+    public string? ReceivedLetterNumber { get; set; }
+    public string? Remarks { get; set; }
+    public string? EntryTime { get; set; }
 }
 
 public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Guid>
@@ -37,7 +41,11 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
             AttachmentUrl = request.AttachmentUrl,
             ForwardedToDepartment = request.ForwardedToDepartment,
             Priority = request.Priority,
-            Status = "Pending"
+            Status = "Pending",
+            ReceivedLetterDate = request.ReceivedLetterDate,
+            ReceivedLetterNumber = request.ReceivedLetterNumber,
+            Remarks = request.Remarks,
+            EntryTime = request.EntryTime
         };
 
         _context.Dartas.Add(entity);

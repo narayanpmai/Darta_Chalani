@@ -16,4 +16,10 @@ public class Darta : BaseEntity, IMustHaveTenant, IFiscalYearAware
     public string? ForwardedToDepartment { get; set; }
     public string Priority { get; set; } = "Normal";
     public string Status { get; set; } = "Pending";
+    
+    public string? ReceivedLetterDate { get; set; }
+    public string? ReceivedLetterNumber { get; set; }
+    public string? Remarks { get; set; }
+    
+    public string? EntryTime { get; set; }
 }

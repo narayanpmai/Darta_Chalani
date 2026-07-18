@@ -15,6 +15,11 @@ public class CreateChalaniCommand : IRequest<Guid>
     public string? AttachmentUrl { get; set; }
     public string OriginatingDepartment { get; set; } = string.Empty;
     public string DeliveryMethod { get; set; } = "Physical";
+    public string? ReferenceLetterNumber { get; set; }
+    public string? Remarks { get; set; }
+    public string? PeonBookNumber { get; set; }
+    public string? DispatchTime { get; set; }
+    public string? OrderOrDecision { get; set; }
 }
 
 public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand, Guid>
@@ -39,7 +44,12 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
             AttachmentUrl = request.AttachmentUrl,
             OriginatingDepartment = request.OriginatingDepartment,
             DeliveryMethod = request.DeliveryMethod,
-            Status = "Dispatched"
+            Status = "Dispatched",
+            ReferenceLetterNumber = request.ReferenceLetterNumber,
+            Remarks = request.Remarks,
+            PeonBookNumber = request.PeonBookNumber,
+            DispatchTime = request.DispatchTime,
+            OrderOrDecision = request.OrderOrDecision
         };
 
         _context.Chalanis.Add(entity);

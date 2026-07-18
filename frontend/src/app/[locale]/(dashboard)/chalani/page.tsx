@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Send, FileText, QrCode, UploadCloud, Users, X } from "lucide-react"
 import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
 import { useAuth } from "@/lib/auth-context"
+import NepaliDate from "nepali-datetime"
+import { getDefaultDateForFiscalYear } from "@/lib/fiscal-year-utils"
 
 export default function ChalaniPage() {
   const { user } = useAuth()
@@ -30,9 +32,14 @@ export default function ChalaniPage() {
     address: "",
     subject: "",
     deliveryMethod: "",
-    department: ""
+    department: "",
+    referenceLetterNumber: "",
+    remarks: "",
+    peonBookNumber: "",
+    dispatchTime: "",
+    orderOrDecision: ""
   })
-  const [miti, setMiti] = useState("2082-04-12")
+  const [miti, setMiti] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Load initial settings and sequences
@@ -42,9 +49,13 @@ export default function ChalaniPage() {
     if (fyStore) {
       const parsed = JSON.parse(fyStore)
       const active = parsed.find((f: any) => f.isActive)
-      if (active) setActiveFy(active.name)
+      if (active) {
+        setActiveFy(active.name)
+        setMiti(getDefaultDateForFiscalYear(active.name))
+      }
     } else {
       setActiveFy("२०८२/०८३") // fallback
+      setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
     }
 
     // 2. Fetch Settings for Dropdowns
@@ -108,7 +119,12 @@ export default function ChalaniPage() {
         receiverAddress: formData.address,
         subject: formData.subject,
         originatingDepartment: formData.department,
-        deliveryMethod: formData.deliveryMethod || "Physical"
+        deliveryMethod: formData.deliveryMethod || "Physical",
+        referenceLetterNumber: formData.referenceLetterNumber,
+        remarks: formData.remarks,
+        peonBookNumber: formData.peonBookNumber,
+        dispatchTime: formData.dispatchTime,
+        orderOrDecision: formData.orderOrDecision
       }
 
       const res = await fetch(`${apiUrl}/Chalani`, {
@@ -190,6 +206,16 @@ export default function ChalaniPage() {
                 <Input id="subject" placeholder="Enter the subject of the letter" value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="reference-number">Reference Letter No. (पत्र संख्या)</Label>
+                <Input 
+                  id="reference-number" 
+                  placeholder="Enter reference letter number (if any)" 
+                  value={formData.referenceLetterNumber} 
+                  onChange={(e) => setFormData({...formData, referenceLetterNumber: e.target.value})} 
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="delivery-method">Delivery Method</Label>
@@ -217,6 +243,47 @@ export default function ChalaniPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="remarks">Remarks (कैफियत)</Label>
+                <Input 
+                  id="remarks" 
+                  placeholder="Enter any remarks" 
+                  value={formData.remarks} 
+                  onChange={(e) => setFormData({...formData, remarks: e.target.value})} 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="peon-book">Peon Book No. (परिचर किताब नं.)</Label>
+                  <Input 
+                    id="peon-book" 
+                    placeholder="Enter peon book number" 
+                    value={formData.peonBookNumber} 
+                    onChange={(e) => setFormData({...formData, peonBookNumber: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dispatch-time">Dispatch Time (चलानी समय)</Label>
+                  <Input 
+                    id="dispatch-time" 
+                    type="time"
+                    value={formData.dispatchTime} 
+                    onChange={(e) => setFormData({...formData, dispatchTime: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="order">Order/Decision (तोक/आदेश)</Label>
+                <Input 
+                  id="order" 
+                  placeholder="Enter order or decision details" 
+                  value={formData.orderOrDecision} 
+                  onChange={(e) => setFormData({...formData, orderOrDecision: e.target.value})} 
+                />
               </div>
             </CardContent>
           </Card>
