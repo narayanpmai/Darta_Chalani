@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/select"
 import { useAuth } from "@/lib/auth-context"
 import { formatNepaliDate } from "@/lib/date-utils"
+import { fetchApi } from "@/lib/api"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Status = "Active" | "Disabled"
 
 interface RoleCategory {
-  id: number
+  id: string
   name: string
   description: string
   color: string        // tailwind badge classes
@@ -29,19 +30,19 @@ interface RoleCategory {
 }
 
 interface BranchCategory {
-  id: number
+  id: string
   name: string
   nameEn: string
   type: "ward" | "branch"   // वडा or शाखा
 }
 
 interface StaffUser {
-  id: number
+  id: string
   name: string
   email: string
-  roleId: number
-  branchId: number
-  departmentId?: number
+  roleId: string
+  branchId: string
+  departmentId?: string
   status: Status
   joined: string
   username: string
@@ -54,28 +55,19 @@ interface StaffUser {
 
 // ─── Seed: Roles ──────────────────────────────────────────────────────────────
 const SEED_ROLES: RoleCategory[] = [
-  { id: 0, name: "Super Admin",        description: "प्रणाली व्यवस्थापक — प्रणाली स्तरको सम्पूर्ण पहुँच।", color: "bg-red-100 text-red-700 border-red-200", scope: "palika" },
-  { id: 1, name: "Municipality Admin", description: "पालिका स्तरको सम्पूर्ण पहुँच — सबै वडाको डाटा व्यवस्थापन।", color: "bg-purple-100 text-purple-700 border-purple-200", scope: "palika" },
-  { id: 2, name: "Ward Chair",         description: "वडा स्तरको पहुँच — दर्ता, चलानी र सिफारिस अनुमोदन।",      color: "bg-blue-100 text-blue-700 border-blue-200",   scope: "ward" },
-  { id: 3, name: "Operator",           description: "डाटा प्रविष्टि मात्र — दर्ता/चलानी प्रविष्टि र रेकर्ड।",  color: "bg-orange-100 text-orange-700 border-orange-200", scope: "ward" },
+  { id: "Super Admin", name: "Super Admin",        description: "प्रणाली व्यवस्थापक — प्रणाली स्तरको सम्पूर्ण पहुँच।", color: "bg-red-100 text-red-700 border-red-200", scope: "palika" },
+  { id: "Municipality Admin", name: "Municipality Admin", description: "पालिका स्तरको सम्पूर्ण पहुँच — सबै वडाको डाटा व्यवस्थापन।", color: "bg-purple-100 text-purple-700 border-purple-200", scope: "palika" },
+  { id: "Ward Chair", name: "Ward Chair",         description: "वडा स्तरको पहुँच — दर्ता, चलानी र सिफारिस अनुमोदन।",      color: "bg-blue-100 text-blue-700 border-blue-200",   scope: "ward" },
+  { id: "Operator", name: "Operator",           description: "डाटा प्रविष्टि मात्र — दर्ता/चलानी प्रविष्टि र रेकर्ड।",  color: "bg-orange-100 text-orange-700 border-orange-200", scope: "ward" },
 ]
 
 // ─── Seed: Branches/Wards ──────────────────────────────────────────────────────
 const SEED_BRANCHES: BranchCategory[] = [
-  { id: 1,  name: "केन्द्रीय कार्यालय",  nameEn: "Central Office", type: "branch" },
-  { id: 2,  name: "प्रशासन शाखा",       nameEn: "Administration", type: "branch" },
-  { id: 3,  name: "वडा नं. १",           nameEn: "Ward No. 1",     type: "ward" },
-  { id: 4,  name: "वडा नं. २",           nameEn: "Ward No. 2",     type: "ward" },
+  { id: "null",  name: "केन्द्रीय कार्यालय",  nameEn: "Central Office", type: "branch" }
 ]
 
 // ─── Seed: Users ──────────────────────────────────────────────────────────────
-const SEED_USERS: StaffUser[] = [
-  { id: 0, name: "Super Admin", email: "superadmin@lgoms.gov.np", roleId: 0, branchId: 1, departmentId: 1, status: "Active", joined: "2082/01/01", username: "superadmin", password: "admin123", employeeCode: "EMP-000", mfaStatus: "Enabled", lastLogin: "2082/04/12 11:00 AM", avatar: null },
-  { id: 1, name: "Admin User",  email: "admin@lgoms.gov.np",      roleId: 1, branchId: 1, departmentId: 1, status: "Active",   joined: "2082/03/15", username: "admin", password: "admin123", employeeCode: "EMP-001", mfaStatus: "Enabled", lastLogin: "2082/04/10 10:23 AM", avatar: null },
-  { id: 2, name: "Narayan Pmai", email: "narayanpmai@gmail.com",  roleId: 1, branchId: 1, departmentId: 1, status: "Active",   joined: "2083/04/04", username: "narayanpmai", password: "admin123", employeeCode: "EMP-002", mfaStatus: "Disabled", lastLogin: null, avatar: null },
-  { id: 3, name: "Ram Bahadur", email: "ram.ward1@lgoms.gov.np",  roleId: 2, branchId: 3, departmentId: 3, status: "Active",   joined: "2082/01/20", username: "ram_ward1", password: "ward123", employeeCode: "EMP-003", mfaStatus: "Disabled", lastLogin: "2082/04/09 14:10 PM", avatar: null },
-  { id: 4, name: "Sita Sharma", email: "sita.op@lgoms.gov.np",    roleId: 3, branchId: 2, departmentId: 2, status: "Active",   joined: "2081/11/05", username: "sita_op", password: "op123", employeeCode: "EMP-004", mfaStatus: "Enabled", lastLogin: "2082/04/11 09:15 AM", avatar: null },
-]
+const SEED_USERS: StaffUser[] = []
 
 // ─── Color palette for new roles ──────────────────────────────────────────────
 const COLOR_PALETTE = [
@@ -108,64 +100,61 @@ function UsersManagementContent() {
   const [branches, setBranches] = useState<BranchCategory[]>(SEED_BRANCHES)
   const [users, setUsers]       = useState<StaffUser[]>(SEED_USERS)
 
-  // Load from localStorage on mount
+  // Fetch from server API
+  const fetchUsers = async () => {
+    try {
+      const data = await fetchApi('/Users');
+      if (data && Array.isArray(data)) {
+        // Map backend UserDto to frontend StaffUser
+        setUsers(data.map((u: any) => ({
+          id: u.id,
+          name: u.fullName || "",
+          email: u.email || "",
+          roleId: u.role || "Operator",
+          branchId: u.wardId || "null",
+          status: u.isActive ? "Active" : "Disabled",
+          joined: new Date(u.createdAt).toLocaleDateString(),
+          username: u.username,
+          employeeCode: u.employeeCode || "",
+          mfaStatus: "Disabled",
+          lastLogin: u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : null,
+          avatar: null
+        })));
+      }
+    } catch (err) {
+      console.error("Failed to load users from API", err);
+    }
+  };
+
+  const fetchWards = async () => {
+    try {
+      const data = await fetchApi('/Wards');
+      if (data && Array.isArray(data)) {
+        const mappedBranches: BranchCategory[] = [
+          { id: "null", name: "केन्द्रीय कार्यालय", nameEn: "Central Office", type: "branch" },
+          ...data.map((w: any) => {
+            const wardNum = w.wardNumber || w.WardNumber;
+            const wName = w.name || w.Name;
+            const wNameEn = w.nameEn || w.NameEn;
+            return {
+              id: w.id || w.Id,
+              name: wName || `वडा नं. ${wardNum}`,
+              nameEn: wNameEn || `Ward No. ${wardNum}`,
+              type: "ward" as const
+            };
+          })
+        ];
+        setBranches(mappedBranches);
+      }
+    } catch (err) {
+      console.error("Failed to load wards from API", err);
+    }
+  };
+
   useEffect(() => {
-    const storedRoles = localStorage.getItem("lgoms_roles")
-    if (storedRoles) {
-      try {
-        const parsed = JSON.parse(storedRoles);
-        if (!parsed.some((r: any) => r.id === 0)) {
-          setRoles([
-            { id: 0, name: "Super Admin", description: "प्रणाली व्यवस्थापक — प्रणाली स्तरको सम्पूर्ण पहुँच।", color: "bg-red-100 text-red-700 border-red-200", scope: "palika" },
-            ...parsed
-          ]);
-        } else {
-          setRoles(parsed);
-        }
-      } catch (e) {}
-    }
-
-    const storedBranches = localStorage.getItem("lgoms_branches")
-    if (storedBranches) {
-      try { setBranches(JSON.parse(storedBranches)) } catch (e) {}
-    }
-
-    const storedUsers = localStorage.getItem("lgoms_users_db")
-    // Fetch from server API
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(data => {
-        if (data && Array.isArray(data)) {
-          // If they had local users that aren't on the server yet, we could merge them,
-          // but for simplicity, we just use server data.
-          setUsers(data);
-        }
-      })
-      .catch(err => {
-        console.error("Failed to load users from API", err);
-        // Fallback to local storage if server fails
-        if (storedUsers) {
-          try {
-            setUsers(JSON.parse(storedUsers));
-          } catch (e) {}
-        }
-      });
-  }, [])
-
-  // Sync to localStorage
-  useEffect(() => { localStorage.setItem("lgoms_roles", JSON.stringify(roles)) }, [roles])
-  useEffect(() => { localStorage.setItem("lgoms_branches", JSON.stringify(branches)) }, [branches])
-  useEffect(() => { 
-    localStorage.setItem("lgoms_users_db", JSON.stringify(users)) 
-    // Also save to server API
-    if (users !== SEED_USERS) { // Don't trigger infinite loop on mount
-      fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(users)
-      }).catch(err => console.error("Failed to sync users to server", err))
-    }
-  }, [users])
+    fetchUsers();
+    fetchWards();
+  }, []);
 
   // ── User table filters
   const [search, setSearch]                 = useState("")
@@ -174,12 +163,12 @@ function UsersManagementContent() {
   const [filterBranchId, setFilterBranchId] = useState<string>("all") // acts as Ward / Dept filter
 
   // ── Bulk Actions
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
 
   // ── User modal
   const [userModal, setUserModal] = useState(false)
   const [modalTab, setModalTab]   = useState<"info" | "roles" | "security" | "docs">("info")
-  const [editUserId, setEditUserId] = useState<number | null>(null)
+  const [editUserId, setEditUserId] = useState<string | null>(null)
   
   const [uForm, setUForm] = useState({ 
     employeeCode: "",
@@ -197,12 +186,12 @@ function UsersManagementContent() {
 
   // ── Role category modal
   const [roleModal, setRoleModal] = useState(false)
-  const [editRoleId, setEditRoleId] = useState<number | null>(null)
+  const [editRoleId, setEditRoleId] = useState<string | null>(null)
   const [rForm, setRForm] = useState({ name: "", description: "", scope: "ward" as "palika" | "ward" })
 
   // ── Branch category modal
   const [branchModal, setBranchModal] = useState(false)
-  const [editBranchId, setEditBranchId] = useState<number | null>(null)
+  const [editBranchId, setEditBranchId] = useState<string | null>(null)
   const [bForm, setBForm] = useState({ name: "", nameEn: "", type: "ward" as "ward" | "branch" })
 
   // ─────────────────────────────── USER CRUD ───────────────────────────────────
@@ -250,37 +239,99 @@ function UsersManagementContent() {
     return e
   }
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     const e = validateUser()
     if (Object.keys(e).length) { setUErrors(e); setModalTab("info"); return }
-    if (editUserId) {
-      setUsers(prev => prev.map(u => u.id === editUserId
-        ? { ...u, employeeCode: uForm.employeeCode, name: uForm.name, email: uForm.email, username: uForm.username, roleId: Number(uForm.roleId), branchId: Number(uForm.branchId), status: uForm.status, mfaStatus: uForm.mfaStatus, ...(password ? { password } : {}) }
-        : u))
-    } else {
-      setUsers(prev => [...prev, { id: Date.now(), employeeCode: uForm.employeeCode, name: uForm.name, email: uForm.email, username: uForm.username, password, roleId: Number(uForm.roleId), branchId: Number(uForm.branchId), departmentId: Number(uForm.branchId), status: uForm.status, mfaStatus: uForm.mfaStatus, joined: formatNepaliDate(), lastLogin: null, avatar: null }])
+    
+    try {
+      if (editUserId) {
+        // PUT /api/Users/{id}
+        const cmd = {
+          fullName: uForm.name,
+          email: uForm.email,
+          username: uForm.username,
+          employeeCode: uForm.employeeCode,
+          role: roles.find(r => r.id.toString() === uForm.roleId)?.name || "Operator",
+          wardId: uForm.branchId !== "null" ? uForm.branchId : null,
+          isActive: uForm.status === "Active",
+          newPassword: password || null
+        };
+        await fetchApi(`/Users/${editUserId}`, {
+          method: 'PUT',
+          body: JSON.stringify(cmd)
+        });
+      } else {
+        // POST /api/Users
+        const cmd = {
+          fullName: uForm.name,
+          email: uForm.email,
+          username: uForm.username,
+          password: password,
+          employeeCode: uForm.employeeCode,
+          role: roles.find(r => r.id === uForm.roleId)?.name || "Operator",
+          wardId: uForm.branchId !== "null" ? uForm.branchId : null
+        };
+        await fetchApi('/Users', {
+          method: 'POST',
+          body: JSON.stringify(cmd)
+        });
+      }
+      
+      setUserModal(false);
+      fetchUsers(); // Refresh the list
+    } catch (err) {
+      console.error("Failed to save user", err);
+      alert("प्रयोगकर्ता सुरक्षित गर्न असफल भयो।");
     }
-    setUserModal(false)
   }
 
-  const handleDeleteUser   = (id: number) => { if (confirm("यो user हटाउने?")) setUsers(p => p.filter(u => u.id !== id)) }
+  const handleDeleteUser = async (id: string) => {
+    if (confirm("यो user हटाउने?")) {
+      try {
+        await fetchApi(`/Users/${id}`, { method: 'DELETE' });
+        fetchUsers();
+      } catch (err) {
+        console.error("Failed to delete user", err);
+      }
+    }
+  }
 
   // Bulk Actions
-  const toggleUserSelection = (id: number) => {
+  const toggleUserSelection = (id: string) => {
     setSelectedUserIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   }
   const toggleSelectAll = () => {
     if (selectedUserIds.length === filtered.length) setSelectedUserIds([])
     else setSelectedUserIds(filtered.map(u => u.id))
   }
-  const handleBulkActivate = () => {
-    setUsers(p => p.map(u => selectedUserIds.includes(u.id) ? { ...u, status: "Active" } : u))
-    setSelectedUserIds([])
+  
+  const handleBulkStatusChange = async (status: "Active" | "Disabled") => {
+    for (const id of selectedUserIds) {
+      try {
+        // Assume API allows toggling or updating status
+        const user = users.find(u => u.id === id);
+        if (user) {
+          const cmd = {
+            fullName: user.name,
+            email: user.email,
+            employeeCode: user.employeeCode,
+            role: user.roleId, // Might not map perfectly without fetching again, but we just use toggle status if available
+            isActive: status === "Active",
+          };
+          await fetchApi(`/Users/${id}/toggle-status`, {
+            method: 'PUT'
+          });
+        }
+      } catch (err) {
+        console.error("Failed to update status for user", id);
+      }
+    }
+    fetchUsers();
+    setSelectedUserIds([]);
   }
-  const handleBulkDeactivate = () => {
-    setUsers(p => p.map(u => selectedUserIds.includes(u.id) ? { ...u, status: "Disabled" } : u))
-    setSelectedUserIds([])
-  }
+
+  const handleBulkActivate = () => handleBulkStatusChange("Active");
+  const handleBulkDeactivate = () => handleBulkStatusChange("Disabled");
 
   // ─────────────────────────────── ROLE CRUD ───────────────────────────────────
   const openCreateRole = () => { setEditRoleId(null); setRForm({ name: "", description: "", scope: "ward" }); setRoleModal(true) }
@@ -292,11 +343,11 @@ function UsersManagementContent() {
       setRoles(p => p.map(r => r.id === editRoleId ? { ...r, ...rForm } : r))
     } else {
       const color = COLOR_PALETTE[roles.length % COLOR_PALETTE.length]
-      setRoles(p => [...p, { id: Date.now(), ...rForm, color }])
+      setRoles(p => [...p, { id: Date.now().toString(), ...rForm, color }])
     }
     setRoleModal(false)
   }
-  const handleDeleteRole = (id: number) => { if (confirm("यो role हटाउने?")) setRoles(p => p.filter(r => r.id !== id)) }
+  const handleDeleteRole = (id: string) => { if (confirm("यो role हटाउने?")) setRoles(p => p.filter(r => r.id !== id)) }
 
   // ─────────────────────────────── BRANCH CRUD ─────────────────────────────────
   const openCreateBranch = () => { setEditBranchId(null); setBForm({ name: "", nameEn: "", type: "ward" }); setBranchModal(true) }
@@ -307,16 +358,16 @@ function UsersManagementContent() {
     if (editBranchId) {
       setBranches(p => p.map(b => b.id === editBranchId ? { ...b, ...bForm } : b))
     } else {
-      setBranches(p => [...p, { id: Date.now(), ...bForm }])
+      setBranches(p => [...p, { id: Date.now().toString(), ...bForm }])
     }
     setBranchModal(false)
   }
-  const handleDeleteBranch = (id: number) => { if (confirm("यो शाखा/वडा हटाउने?")) setBranches(p => p.filter(b => b.id !== id)) }
+  const handleDeleteBranch = (id: string) => { if (confirm("यो शाखा/वडा हटाउने?")) setBranches(p => p.filter(b => b.id !== id)) }
 
   // ─────────────────────────────── FILTERED USERS ──────────────────────────────
   const filtered = users.filter(u => {
     const uRole = roles.find(r => r.id === u.roleId)
-    const isSuperAdminRole = uRole?.name === "Super Admin" || u.roleId === 0
+    const isSuperAdminRole = uRole?.name === "Super Admin" || u.roleId === "Super Admin"
 
     // Filter municipality users out of Super Admin views, and Super Admins out of municipality views
     if (isSuperAdmin && !isSuperAdminRole) return false
@@ -329,22 +380,21 @@ function UsersManagementContent() {
     return matchSearch && matchRole && matchStatus && matchBranch
   })
 
-  const getRole   = (id: number) => roles.find(r => r.id === id)
-  const getBranch = (id: number) => branches.find(b => b.id === id)
+  const getRole   = (id: string) => roles.find(r => r.id === id)
+  const getBranch = (id: string) => branches.find(b => b.id === id)
 
   // ─────────────────────────────── SELECTED ROLE SCOPE ────────────────────────
-  const selectedRole = roles.find(r => r.id === Number(uForm.roleId))
+  const selectedRole = roles.find(r => r.id === uForm.roleId)
   const isPalikaScope = selectedRole?.scope === "palika"
 
   // ─────────────────────────────── STATS ───────────────────────────────────────
   const displayedUsers = users.filter(u => {
-    const uRole = roles.find(r => r.id === u.roleId)
-    const isSuperAdminRole = uRole?.name === "Super Admin" || u.roleId === 0
+    const isSuperAdminRole = u.roleId === "Super Admin"
     return isSuperAdmin ? isSuperAdminRole : !isSuperAdminRole
   })
   
   const displayedRoles = roles.filter(r => {
-    const isSuperAdminRole = r.name === "Super Admin" || r.id === 0
+    const isSuperAdminRole = r.name === "Super Admin"
     return isSuperAdmin ? isSuperAdminRole : !isSuperAdminRole
   })
 
