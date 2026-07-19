@@ -18,10 +18,15 @@ services:
     ports:
       - "5000:8080"
     environment:
+      # Database
       - ConnectionStrings__DefaultConnection=Host=db;Database=lgoms_db;Username=postgres;Password=password123
-      - Jwt__Issuer=http://localhost:5000
-      - Jwt__Audience=lgoms-client
-      - Jwt__Key=SuperSecretKeyForLocalDevelopmentOnly12345
+      # JWT — must match appsettings.json exactly
+      - JwtSettings__Secret=SuperSecretKeyForLocalGovernmenteOfficeManagementSystem12345!@#
+      - JwtSettings__Issuer=LGOMS_Api
+      - JwtSettings__Audience=LGOMS_Client
+      - JwtSettings__ExpiryInMinutes=480
+      # Force HTTP only (no HTTPS redirect inside container)
+      - ASPNETCORE_URLS=http://+:8080
     depends_on:
       - db
 
@@ -32,7 +37,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+      # Browser uses relative /api — Next.js proxy rewrites to backend
+      - NEXT_PUBLIC_API_URL=/api
+      # Server-side proxy target (Docker internal hostname)
+      - BACKEND_URL=http://backend:8080
     depends_on:
       - backend
 

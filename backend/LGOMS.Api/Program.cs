@@ -23,6 +23,10 @@ builder.Services.AddScoped<ITenantService, CurrentTenantService>();
 builder.Services.AddScoped<IFiscalYearService, CurrentFiscalYearService>();
 
 // Configure JWT Authentication
+var jwtSecret = builder.Configuration["JwtSettings:Secret"]!;
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]!;
+var jwtAudience = builder.Configuration["JwtSettings:Audience"]!;
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -32,12 +36,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-            ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
         };
     });
 builder.Services.AddAuthorization();
+
+// CORS — allow all origins for public network access
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -47,20 +62,22 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS if not running inside Docker (where no cert is available)
+// ASPNETCORE_URLS=http://+:8080 means we're in Docker
+var aspnetUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "";
+if (!aspnetUrls.StartsWith("http://+"))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
-
-// Use CORS (Allow all for development, restrict in production)
-app.UseCors(x => x
-    .AllowAnyOrigin()
-    .AllowAnyMethod()
-    .AllowAnyHeader());
-
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
+// Run database migrations on startup
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<LGOMS.Infrastructure.Persistence.ApplicationDbContext>();

@@ -16,3 +16,10 @@ obj/
 *.userosscache
 *.sln.docstates
 appsettings.Development.json
+
+# Published output (should not be in source control)
+backend/publish/
+
+# Frontend build artifacts
+frontend/.next/
+frontend/tsconfig.tsbuildinfo

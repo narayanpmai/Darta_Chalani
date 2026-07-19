@@ -4,19 +4,35 @@ using LGOMS.Application.Interfaces;
 
 namespace LGOMS.Application.Features.Darta.Commands;
 
+/// <summary>
+/// नयाँ दर्ता गर्ने Command — NAMS Standard Fields
+/// </summary>
 public class CreateDartaCommand : IRequest<Guid>
 {
-    public string DartaNumber { get; set; } = string.Empty;
+    // ── मिति ──────────────────────────────────────────────────────────────────
     public DateTime RegistrationDate { get; set; }
-    public string Miti { get; set; } = string.Empty;
-    public string SenderName { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string? AttachmentUrl { get; set; }
-    public string? ForwardedToDepartment { get; set; }
+    public string Miti { get; set; } = string.Empty;           // दर्ता मिति (BS)
+
+    // ── प्राप्त पत्रको विवरण ─────────────────────────────────────────────────
+    public string? ReceivedLetterDate { get; set; }            // प्राप्त पत्रको मिति
+    public string? ReceivedLetterNumber { get; set; }          // पत्र संख्या / च.नं.
+
+    // ── पठाउनेको विवरण ────────────────────────────────────────────────────
+    public string SenderName { get; set; } = string.Empty;     // पठाउनेको नाम
+    public string SenderAddress { get; set; } = string.Empty;  // पठाउनेको ठेगाना (NAMS)
+
+    // ── पत्रको विवरण ──────────────────────────────────────────────────────
+    public string Subject { get; set; } = string.Empty;        // विषय
+    public string LetterType { get; set; } = "General";        // पत्रको किसिम (NAMS)
+
+    // ── बुझ्ने फाँट ───────────────────────────────────────────────────────
+    public string? ForwardedToDepartment { get; set; }         // बुझ्ने फाँट/शाखा
+    public string? HandledBy { get; set; }                     // बुझिलिनेको नाम (NAMS)
+
+    // ── प्राथमिकता र कैफियत ──────────────────────────────────────────────
     public string Priority { get; set; } = "Normal";
-    public string? ReceivedLetterDate { get; set; }
-    public string? ReceivedLetterNumber { get; set; }
-    public string? Remarks { get; set; }
+    public string? Remarks { get; set; }                       // कैफियत
+    public string? AttachmentUrl { get; set; }                 // संलग्न फाइल
     public string? EntryTime { get; set; }
 }
 
@@ -27,7 +43,11 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
     private readonly ITenantService _tenantService;
     private readonly IFiscalYearService _fiscalYearService;
 
-    public CreateDartaCommandHandler(IApplicationDbContext context, ISequenceGeneratorService sequenceGenerator, ITenantService tenantService, IFiscalYearService fiscalYearService)
+    public CreateDartaCommandHandler(
+        IApplicationDbContext context,
+        ISequenceGeneratorService sequenceGenerator,
+        ITenantService tenantService,
+        IFiscalYearService fiscalYearService)
     {
         _context = context;
         _sequenceGenerator = sequenceGenerator;
@@ -39,24 +59,27 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
     {
         var tenantId = _tenantService.GetTenantId();
         var fiscalYearId = _fiscalYearService.GetFiscalYearId();
-        Guid? wardId = null; // Extract from CurrentUserService in the future
 
-        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, wardId, fiscalYearId, "Darta");
+        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(
+            tenantId, null, fiscalYearId, "Darta");
 
         var entity = new LGOMS.Domain.Entities.Darta
         {
             DartaNumber = generatedNumber,
             RegistrationDate = request.RegistrationDate,
             Miti = request.Miti,
-            SenderName = request.SenderName,
-            Subject = request.Subject,
-            AttachmentUrl = request.AttachmentUrl,
-            ForwardedToDepartment = request.ForwardedToDepartment,
-            Priority = request.Priority,
-            Status = "Pending",
             ReceivedLetterDate = request.ReceivedLetterDate,
             ReceivedLetterNumber = request.ReceivedLetterNumber,
+            SenderName = request.SenderName,
+            SenderAddress = request.SenderAddress,
+            Subject = request.Subject,
+            LetterType = request.LetterType,
+            ForwardedToDepartment = request.ForwardedToDepartment,
+            HandledBy = request.HandledBy,
+            Priority = request.Priority,
+            Status = "Pending",
             Remarks = request.Remarks,
+            AttachmentUrl = request.AttachmentUrl,
             EntryTime = request.EntryTime,
             FiscalYearId = fiscalYearId
         };

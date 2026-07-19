@@ -4,22 +4,40 @@ using LGOMS.Application.Interfaces;
 
 namespace LGOMS.Application.Features.Chalani.Commands;
 
+/// <summary>
+/// नयाँ चलानी गर्ने Command — NAMS Standard Fields
+/// </summary>
 public class CreateChalaniCommand : IRequest<Guid>
 {
-    public string ChalaniNumber { get; set; } = string.Empty;
+    // ── मिति ──────────────────────────────────────────────────────────────────
     public DateTime DispatchDate { get; set; }
-    public string Miti { get; set; } = string.Empty;
-    public string ReceiverName { get; set; } = string.Empty;
-    public string ReceiverAddress { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string? AttachmentUrl { get; set; }
+    public string Miti { get; set; } = string.Empty;               // चलानी मिति (BS)
+
+    // ── कार्यालयको पत्र संख्या ──────────────────────────────────────────────
+    public string? LetterNumber { get; set; }                      // पत्र संख्या (NAMS)
+
+    // ── पाउनेको विवरण ─────────────────────────────────────────────────────
+    public string ReceiverName { get; set; } = string.Empty;       // पाउनेको नाम
+    public string ReceiverAddress { get; set; } = string.Empty;    // पाउनेको ठेगाना
+
+    // ── पत्रको विवरण ──────────────────────────────────────────────────────
+    public string Subject { get; set; } = string.Empty;            // विषय
+
+    // ── पठाउने शाखा र माध्यम ─────────────────────────────────────────────
     public string OriginatingDepartment { get; set; } = string.Empty;
-    public string DeliveryMethod { get; set; } = "Physical";
-    public string? ReferenceLetterNumber { get; set; }
-    public string? Remarks { get; set; }
+    public string DeliveryMethod { get; set; } = "Physical";       // पठाउने माध्यम
+
+    // ── हुलाक/पियन बुक ────────────────────────────────────────────────────
     public string? PeonBookNumber { get; set; }
     public string? DispatchTime { get; set; }
-    public string? OrderOrDecision { get; set; }
+
+    // ── सन्दर्भ दर्ता ─────────────────────────────────────────────────────
+    public string? ReferenceDartaNumber { get; set; }              // सन्दर्भ दर्ता नं. (NAMS)
+    public string? OrderOrDecision { get; set; }                   // आदेश/निर्णय
+
+    // ── कैफियत र संलग्न ────────────────────────────────────────────────────
+    public string? Remarks { get; set; }
+    public string? AttachmentUrl { get; set; }
 }
 
 public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand, Guid>
@@ -29,7 +47,11 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
     private readonly ITenantService _tenantService;
     private readonly IFiscalYearService _fiscalYearService;
 
-    public CreateChalaniCommandHandler(IApplicationDbContext context, ISequenceGeneratorService sequenceGenerator, ITenantService tenantService, IFiscalYearService fiscalYearService)
+    public CreateChalaniCommandHandler(
+        IApplicationDbContext context,
+        ISequenceGeneratorService sequenceGenerator,
+        ITenantService tenantService,
+        IFiscalYearService fiscalYearService)
     {
         _context = context;
         _sequenceGenerator = sequenceGenerator;
@@ -41,27 +63,28 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
     {
         var tenantId = _tenantService.GetTenantId();
         var fiscalYearId = _fiscalYearService.GetFiscalYearId();
-        Guid? wardId = null; // Extract from CurrentUserService in the future
 
-        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, wardId, fiscalYearId, "Chalani");
+        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(
+            tenantId, null, fiscalYearId, "Chalani");
 
         var entity = new LGOMS.Domain.Entities.Chalani
         {
             ChalaniNumber = generatedNumber,
             DispatchDate = request.DispatchDate,
             Miti = request.Miti,
+            LetterNumber = request.LetterNumber,
             ReceiverName = request.ReceiverName,
             ReceiverAddress = request.ReceiverAddress,
             Subject = request.Subject,
-            AttachmentUrl = request.AttachmentUrl,
             OriginatingDepartment = request.OriginatingDepartment,
             DeliveryMethod = request.DeliveryMethod,
             Status = "Dispatched",
-            ReferenceLetterNumber = request.ReferenceLetterNumber,
-            Remarks = request.Remarks,
+            ReferenceDartaNumber = request.ReferenceDartaNumber,
             PeonBookNumber = request.PeonBookNumber,
             DispatchTime = request.DispatchTime,
             OrderOrDecision = request.OrderOrDecision,
+            Remarks = request.Remarks,
+            AttachmentUrl = request.AttachmentUrl,
             FiscalYearId = fiscalYearId
         };
 
