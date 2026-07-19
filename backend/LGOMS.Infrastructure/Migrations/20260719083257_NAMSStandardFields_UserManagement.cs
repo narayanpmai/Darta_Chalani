@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -35,7 +35,10 @@ namespace LGOMS.Infrastructure.Migrations
                 table: "Users",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
+
+            // Activate all pre-existing users (migration from old schema without IsActive)
+            migrationBuilder.Sql("UPDATE \"Users\" SET \"IsActive\" = true WHERE \"IsActive\" = false;");
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "LastLoginAt",
