@@ -33,7 +33,7 @@ export default function TenantsDashboardPage() {
     setLoading(true)
     setError(null)
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
       const res = await fetch(`${apiUrl}/tenants`)
       if (!res.ok) {
         throw new Error("Failed to load municipalities list")
@@ -97,7 +97,7 @@ export default function TenantsDashboardPage() {
     if (!editingTenant) return
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
       const domain = editForm.subdomain + ".lgoms.gov.np"
       const res = await fetch(`${apiUrl}/tenants/${editingTenant.id}`, {
         method: "PUT",
@@ -124,7 +124,7 @@ export default function TenantsDashboardPage() {
 
   const handleToggleActive = async (t: any) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
       const res = await fetch(`${apiUrl}/tenants/${t.id}`, {
         method: "PUT",
         headers: {

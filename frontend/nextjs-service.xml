@@ -7,5 +7,5 @@
   <workingdirectory>C:\inetpub\wwwroot\Darta_Chalani\frontend</workingdirectory>
   <logmode>rotate</logmode>
   <env name="NODE_ENV" value="production"/>
-  <env name="NEXT_PUBLIC_API_URL" value="http://localhost:5000/api"/>
+  <env name="NEXT_PUBLIC_API_URL" value="/api"/>
 </service>

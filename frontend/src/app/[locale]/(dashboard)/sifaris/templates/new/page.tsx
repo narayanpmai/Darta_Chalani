@@ -36,7 +36,7 @@ export default function NewTemplatePage() {
     setIsGenerating(true)
     try {
       // Calling the backend API for AI generation
-      const res = await fetch('http://localhost:5219/api/ai/generate-template', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ai/generate-template`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

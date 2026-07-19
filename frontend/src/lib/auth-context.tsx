@@ -25,11 +25,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 // Demo users for local testing (until backend is connected)
-const DEMO_USERS: (AuthUser & { password: string })[] = [
-  { id: 0, name: "Super Admin", username: "superadmin", password: "admin123", role: "Super Admin" },
+const DEMO_USERS: (AuthUser & { password: string; email?: string })[] = [
+  { id: 0, name: "Super Admin", username: "superadmin", email: "superadmin@lgoms.gov.np", password: "admin123", role: "Super Admin" },
   { id: 1, name: "Admin User", username: "admin", password: "admin123", role: "Municipality Admin" },
-  { id: 2, name: "Ram Bahadur", username: "ram_ward1", password: "ward123", role: "Ward Chair", ward: "1" },
-  { id: 3, name: "Sita Sharma", username: "sita_op", password: "op123", role: "Operator", ward: "2" },
+  { id: 2, name: "Narayan Pmai", username: "narayanpmai", email: "narayanpmai@gmail.com", password: "admin123", role: "Municipality Admin" },
+  { id: 3, name: "Ram Bahadur", username: "ram_ward1", password: "ward123", role: "Ward Chair", ward: "1" },
+  { id: 4, name: "Sita Sharma", username: "sita_op", password: "op123", role: "Operator", ward: "2" },
 ]
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Try real backend first
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/login`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -80,9 +81,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Backend unavailable – fall through to demo mode
     }
 
-    // Demo mode fallback
-    const storedUsers = localStorage.getItem("lgoms_users_db")
-    const usersList = storedUsers ? JSON.parse(storedUsers) : []
+    // Demo mode fallback - Fetch from Server API first!
+    let usersList = DEMO_USERS as any[];
+    try {
+      const apiRes = await fetch('/api/users', { signal: AbortSignal.timeout(3000) });
+      if (apiRes.ok) {
+        usersList = await apiRes.json();
+      } else {
+        const storedUsers = localStorage.getItem("lgoms_users_db");
+        usersList = storedUsers ? JSON.parse(storedUsers) : DEMO_USERS;
+      }
+    } catch {
+      const storedUsers = localStorage.getItem("lgoms_users_db");
+      usersList = storedUsers ? JSON.parse(storedUsers) : DEMO_USERS;
+    }
 
     // Allow login by username OR email in local DB
     let found = usersList.find((u: any) => (u.username === username || u.email === username) && u.password === password)

@@ -72,8 +72,9 @@ const SEED_BRANCHES: BranchCategory[] = [
 const SEED_USERS: StaffUser[] = [
   { id: 0, name: "Super Admin", email: "superadmin@lgoms.gov.np", roleId: 0, branchId: 1, departmentId: 1, status: "Active", joined: "2082/01/01", username: "superadmin", password: "admin123", employeeCode: "EMP-000", mfaStatus: "Enabled", lastLogin: "2082/04/12 11:00 AM", avatar: null },
   { id: 1, name: "Admin User",  email: "admin@lgoms.gov.np",      roleId: 1, branchId: 1, departmentId: 1, status: "Active",   joined: "2082/03/15", username: "admin", password: "admin123", employeeCode: "EMP-001", mfaStatus: "Enabled", lastLogin: "2082/04/10 10:23 AM", avatar: null },
-  { id: 2, name: "Ram Bahadur", email: "ram.ward1@lgoms.gov.np",  roleId: 2, branchId: 3, departmentId: 3, status: "Active",   joined: "2082/01/20", username: "ram_ward1", password: "ward123", employeeCode: "EMP-002", mfaStatus: "Disabled", lastLogin: "2082/04/09 14:10 PM", avatar: null },
-  { id: 3, name: "Sita Sharma", email: "sita.op@lgoms.gov.np",    roleId: 3, branchId: 2, departmentId: 2, status: "Active",   joined: "2081/11/05", username: "sita_op", password: "op123", employeeCode: "EMP-003", mfaStatus: "Enabled", lastLogin: "2082/04/11 09:15 AM", avatar: null },
+  { id: 2, name: "Narayan Pmai", email: "narayanpmai@gmail.com",  roleId: 1, branchId: 1, departmentId: 1, status: "Active",   joined: "2083/04/04", username: "narayanpmai", password: "admin123", employeeCode: "EMP-002", mfaStatus: "Disabled", lastLogin: null, avatar: null },
+  { id: 3, name: "Ram Bahadur", email: "ram.ward1@lgoms.gov.np",  roleId: 2, branchId: 3, departmentId: 3, status: "Active",   joined: "2082/01/20", username: "ram_ward1", password: "ward123", employeeCode: "EMP-003", mfaStatus: "Disabled", lastLogin: "2082/04/09 14:10 PM", avatar: null },
+  { id: 4, name: "Sita Sharma", email: "sita.op@lgoms.gov.np",    roleId: 3, branchId: 2, departmentId: 2, status: "Active",   joined: "2081/11/05", username: "sita_op", password: "op123", employeeCode: "EMP-004", mfaStatus: "Enabled", lastLogin: "2082/04/11 09:15 AM", avatar: null },
 ]
 
 // ─── Color palette for new roles ──────────────────────────────────────────────
@@ -130,25 +131,41 @@ function UsersManagementContent() {
     }
 
     const storedUsers = localStorage.getItem("lgoms_users_db")
-    if (storedUsers) {
-      try {
-        const parsed = JSON.parse(storedUsers);
-        if (!parsed.some((u: any) => u.username === "superadmin")) {
-          setUsers([
-            { id: 0, name: "Super Admin", email: "superadmin@lgoms.gov.np", roleId: 0, branchId: 1, departmentId: 1, status: "Active", joined: "2082/01/01", username: "superadmin", password: "admin123", employeeCode: "EMP-000", mfaStatus: "Enabled", lastLogin: "2082/04/12 11:00 AM", avatar: null },
-            ...parsed
-          ]);
-        } else {
-          setUsers(parsed);
+    // Fetch from server API
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data)) {
+          // If they had local users that aren't on the server yet, we could merge them,
+          // but for simplicity, we just use server data.
+          setUsers(data);
         }
-      } catch (e) {}
-    }
+      })
+      .catch(err => {
+        console.error("Failed to load users from API", err);
+        // Fallback to local storage if server fails
+        if (storedUsers) {
+          try {
+            setUsers(JSON.parse(storedUsers));
+          } catch (e) {}
+        }
+      });
   }, [])
 
   // Sync to localStorage
   useEffect(() => { localStorage.setItem("lgoms_roles", JSON.stringify(roles)) }, [roles])
   useEffect(() => { localStorage.setItem("lgoms_branches", JSON.stringify(branches)) }, [branches])
-  useEffect(() => { localStorage.setItem("lgoms_users_db", JSON.stringify(users)) }, [users])
+  useEffect(() => { 
+    localStorage.setItem("lgoms_users_db", JSON.stringify(users)) 
+    // Also save to server API
+    if (users !== SEED_USERS) { // Don't trigger infinite loop on mount
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(users)
+      }).catch(err => console.error("Failed to sync users to server", err))
+    }
+  }, [users])
 
   // ── User table filters
   const [search, setSearch]                 = useState("")
