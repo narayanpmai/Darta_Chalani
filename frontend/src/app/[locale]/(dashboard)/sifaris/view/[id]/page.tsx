@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Printer, Download } from "lucide-react"
+import { formatNepaliDate } from '@/lib/date-utils'
 
 export default function SifarisPrintView() {
   const params = useParams()
@@ -66,7 +67,7 @@ export default function SifarisPrintView() {
         {/* Dispatch & Date Section */}
         <div className="flex justify-between text-sm font-medium mb-8">
           <div>पत्र संख्या: २०८१/०८२<br/>चलानी नं: {sifaris.sifarisNumber}</div>
-          <div>मिति: २०८१/०४/२८</div>
+          <div>मिति: {formatNepaliDate(sifaris.date)}</div>
         </div>
 
         {/* Dynamic Body Content */}
@@ -89,7 +90,7 @@ export default function SifarisPrintView() {
                   <div className="absolute inset-0 opacity-10 bg-[url('/signature-watermark.png')] bg-repeat"></div>
                   <span className="block font-bold text-blue-700">Digitally Signed</span>
                   <span className="block text-gray-600">Approved by {sifaris.approvedBy}</span>
-                  <span className="block text-gray-500 text-[10px] mt-1">{new Date().toLocaleDateString()}</span>
+                  <span className="block text-gray-500 text-[10px] mt-1">{formatNepaliDate(sifaris.date)}</span>
                 </div>
                 <div className="border-t border-black w-48 text-center pt-1 font-bold">
                   अधिकृत हस्ताक्षर

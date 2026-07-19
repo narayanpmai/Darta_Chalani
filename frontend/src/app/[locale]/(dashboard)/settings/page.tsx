@@ -56,9 +56,10 @@ function SettingsContent() {
   useEffect(() => {
     setMounted(true)
     const stored = localStorage.getItem("lgoms_settings")
+    let parsed: any = null;
     if (stored) {
       try {
-        const parsed = JSON.parse(stored)
+        parsed = JSON.parse(stored)
         setFormData(prev => ({ 
           ...prev, 
           ...parsed,
@@ -68,6 +69,40 @@ function SettingsContent() {
           fileCategories: parsed.fileCategories ? (Array.isArray(parsed.fileCategories) ? parsed.fileCategories : parsed.fileCategories.split(",").map((s: string) => s.trim())) : prev.fileCategories,
         }))
       } catch (e) {}
+    }
+    
+    // Auto-populate from API if not customized
+    if (!parsed || parsed.tenantName === "काठमाडौं महानगरपालिका") {
+      import("@/lib/api").then(({ fetchApi }) => {
+        fetchApi("/tenants")
+          .then(data => {
+            if (data && data.length > 0) {
+              const latest = data[data.length - 1]; // Use the most recently created tenant
+              import("@/lib/nepal-data/local_levels.json").then(mod => {
+                 const localLevels = mod.default || mod;
+                 let nameNp = latest.name;
+                 const baseName = latest.name.split(" ")[0];
+                 const match = localLevels.find((l: any) => l.name.toLowerCase() === baseName.toLowerCase());
+                 if (match) {
+                    const typeNpMapping: { [key: number]: string } = {
+                      1: "महानगरपालिका",
+                      2: "उपमहानगरपालिका",
+                      3: "नगरपालिका",
+                      4: "गाउँपालिका"
+                    };
+                    nameNp = `${match.nepali_name} ${typeNpMapping[match.local_level_type_id] || ""}`;
+                 }
+                 setFormData(prev => ({
+                    ...prev,
+                    tenantName: nameNp,
+                    tenantNameEn: latest.name,
+                    contactEmail: latest.adminEmail || prev.contactEmail
+                 }))
+              })
+            }
+          })
+          .catch(e => console.log("Failed to fetch tenant", e))
+      })
     }
   }, [])
 
@@ -211,25 +246,25 @@ function SettingsContent() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="tenantName">Municipality Name (Nepali)</Label>
-                    <Input id="" readOnly={!isAdmin} value={formData.tenantName} onChange={handleChange} />
+                    <Input id="tenantName" readOnly={!isAdmin} value={formData.tenantName} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tenantNameEn">Municipality Name (English)</Label>
-                    <Input id="" readOnly={!isAdmin} value={formData.tenantNameEn} onChange={handleChange} />
+                    <Input id="tenantNameEn" readOnly={!isAdmin} value={formData.tenantNameEn} onChange={handleChange} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="province">Province</Label>
-                      <Input id="" readOnly={!isAdmin} value={formData.province} onChange={handleChange} />
+                      <Input id="province" readOnly={!isAdmin} value={formData.province} onChange={handleChange} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="district">District</Label>
-                      <Input id="" readOnly={!isAdmin} value={formData.district} onChange={handleChange} />
+                      <Input id="district" readOnly={!isAdmin} value={formData.district} onChange={handleChange} />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="contactEmail">Official Contact Email</Label>
-                    <Input id="" readOnly={!isAdmin} type="email" value={formData.contactEmail} onChange={handleChange} />
+                    <Input id="contactEmail" readOnly={!isAdmin} type="email" value={formData.contactEmail} onChange={handleChange} />
                   </div>
                 </CardContent>
               </>
@@ -245,11 +280,11 @@ function SettingsContent() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="smsGatewayUrl">SMS Gateway URL</Label>
-                    <Input id="" readOnly={!isAdmin} value={formData.smsGatewayUrl} onChange={handleChange} />
+                    <Input id="smsGatewayUrl" readOnly={!isAdmin} value={formData.smsGatewayUrl} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="smsApiKey">SMS API Key</Label>
-                    <Input id="" readOnly={!isAdmin} type="password" value={formData.smsApiKey} onChange={handleChange} />
+                    <Input id="smsApiKey" readOnly={!isAdmin} type="password" value={formData.smsApiKey} onChange={handleChange} />
                   </div>
                 </CardContent>
               </>
@@ -267,12 +302,12 @@ function SettingsContent() {
                     <Label htmlFor="primaryColor">Primary Color (Hex Code)</Label>
                     <div className="flex gap-3 items-center">
                       <div className="w-10 h-10 rounded-md border shadow-sm" style={{ backgroundColor: formData.primaryColor }}></div>
-                      <Input id="" readOnly={!isAdmin} value={formData.primaryColor} onChange={handleChange} className="max-w-[200px]" />
+                      <Input id="primaryColor" readOnly={!isAdmin} value={formData.primaryColor} onChange={handleChange} className="max-w-[200px]" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="dateFormat">System Date Format</Label>
-                    <Input id="" readOnly={!isAdmin} value={formData.dateFormat} onChange={handleChange} />
+                    <Input id="dateFormat" readOnly={!isAdmin} value={formData.dateFormat} onChange={handleChange} />
                   </div>
                 </CardContent>
               </>
@@ -289,11 +324,11 @@ function SettingsContent() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="backupFrequency">Automated Backup Frequency</Label>
-                      <Input id="" readOnly={!isAdmin} value={formData.backupFrequency} onChange={handleChange} />
+                      <Input id="backupFrequency" readOnly={!isAdmin} value={formData.backupFrequency} onChange={handleChange} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="retentionPeriod">Data Retention Period</Label>
-                      <Input id="" readOnly={!isAdmin} value={formData.retentionPeriod} onChange={handleChange} />
+                      <Input id="retentionPeriod" readOnly={!isAdmin} value={formData.retentionPeriod} onChange={handleChange} />
                     </div>
                   </div>
                 </CardContent>

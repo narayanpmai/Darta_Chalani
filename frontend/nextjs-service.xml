@@ -1,0 +1,11 @@
+<service>
+  <id>nextjs_darta_chalani</id>
+  <name>NextJS Darta Chalani Service</name>
+  <description>Runs the Next.js production server for Darta Chalani frontend</description>
+  <executable>node.exe</executable>
+  <arguments>node_modules\next\dist\bin\next start -p 3000</arguments>
+  <workingdirectory>C:\inetpub\wwwroot\Darta_Chalani\frontend</workingdirectory>
+  <logmode>rotate</logmode>
+  <env name="NODE_ENV" value="production"/>
+  <env name="NEXT_PUBLIC_API_URL" value="http://localhost:5000/api"/>
+</service>

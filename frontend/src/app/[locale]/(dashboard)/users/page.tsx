@@ -15,6 +15,7 @@ import {
   SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/lib/auth-context"
+import { formatNepaliDate } from "@/lib/date-utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Status = "Active" | "Disabled"
@@ -85,10 +86,7 @@ const COLOR_PALETTE = [
   "bg-green-100 text-green-700 border-green-200",
 ]
 
-function todayBS(): string {
-  const d = new Date()
-  return `${d.getFullYear() - 57}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`
-}
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 function UsersManagementContent() {
@@ -105,45 +103,47 @@ function UsersManagementContent() {
   const [activeTab, setActiveTab] = useState<"users" | "categories">(defaultTab)
 
   // ── Data
-  const [roles, setRoles]       = useState<RoleCategory[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("lgoms_roles")
-      if (stored) {
-        const parsed = JSON.parse(stored);
+  const [roles, setRoles]       = useState<RoleCategory[]>(SEED_ROLES)
+  const [branches, setBranches] = useState<BranchCategory[]>(SEED_BRANCHES)
+  const [users, setUsers]       = useState<StaffUser[]>(SEED_USERS)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const storedRoles = localStorage.getItem("lgoms_roles")
+    if (storedRoles) {
+      try {
+        const parsed = JSON.parse(storedRoles);
         if (!parsed.some((r: any) => r.id === 0)) {
-          return [
+          setRoles([
             { id: 0, name: "Super Admin", description: "प्रणाली व्यवस्थापक — प्रणाली स्तरको सम्पूर्ण पहुँच।", color: "bg-red-100 text-red-700 border-red-200", scope: "palika" },
             ...parsed
-          ];
+          ]);
+        } else {
+          setRoles(parsed);
         }
-        return parsed;
-      }
+      } catch (e) {}
     }
-    return SEED_ROLES
-  })
-  const [branches, setBranches] = useState<BranchCategory[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("lgoms_branches")
-      if (stored) return JSON.parse(stored)
+
+    const storedBranches = localStorage.getItem("lgoms_branches")
+    if (storedBranches) {
+      try { setBranches(JSON.parse(storedBranches)) } catch (e) {}
     }
-    return SEED_BRANCHES
-  })
-  const [users, setUsers]       = useState<StaffUser[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("lgoms_users_db")
-      if (stored) {
-        const parsed = JSON.parse(stored);
+
+    const storedUsers = localStorage.getItem("lgoms_users_db")
+    if (storedUsers) {
+      try {
+        const parsed = JSON.parse(storedUsers);
         if (!parsed.some((u: any) => u.username === "superadmin")) {
-          return [
+          setUsers([
             { id: 0, name: "Super Admin", email: "superadmin@lgoms.gov.np", roleId: 0, branchId: 1, departmentId: 1, status: "Active", joined: "2082/01/01", username: "superadmin", password: "admin123", employeeCode: "EMP-000", mfaStatus: "Enabled", lastLogin: "2082/04/12 11:00 AM", avatar: null },
             ...parsed
-          ];
+          ]);
+        } else {
+          setUsers(parsed);
         }
-        return parsed;
-      }
+      } catch (e) {}
     }
-    return SEED_USERS
-  })
+  }, [])
 
   // Sync to localStorage
   useEffect(() => { localStorage.setItem("lgoms_roles", JSON.stringify(roles)) }, [roles])
@@ -241,7 +241,7 @@ function UsersManagementContent() {
         ? { ...u, employeeCode: uForm.employeeCode, name: uForm.name, email: uForm.email, username: uForm.username, roleId: Number(uForm.roleId), branchId: Number(uForm.branchId), status: uForm.status, mfaStatus: uForm.mfaStatus, ...(password ? { password } : {}) }
         : u))
     } else {
-      setUsers(prev => [...prev, { id: Date.now(), employeeCode: uForm.employeeCode, name: uForm.name, email: uForm.email, username: uForm.username, password, roleId: Number(uForm.roleId), branchId: Number(uForm.branchId), departmentId: Number(uForm.branchId), status: uForm.status, mfaStatus: uForm.mfaStatus, joined: todayBS(), lastLogin: null, avatar: null }])
+      setUsers(prev => [...prev, { id: Date.now(), employeeCode: uForm.employeeCode, name: uForm.name, email: uForm.email, username: uForm.username, password, roleId: Number(uForm.roleId), branchId: Number(uForm.branchId), departmentId: Number(uForm.branchId), status: uForm.status, mfaStatus: uForm.mfaStatus, joined: formatNepaliDate(), lastLogin: null, avatar: null }])
     }
     setUserModal(false)
   }

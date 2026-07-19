@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Printer, Save, FileSignature, Sparkles } from "lucide-react"
 import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
+import { formatNepaliDate } from "@/lib/date-utils"
 
 export default function NivedanLekhanPage() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ export default function NivedanLekhanPage() {
   })
 
   useEffect(() => {
-    setFormData(prev => ({ ...prev, miti: new Date().toLocaleDateString('ne-NP') }))
+    setFormData(prev => ({ ...prev, miti: formatNepaliDate() }))
   }, [])
 
   const handleInputChange = (field: string, value: string) => {

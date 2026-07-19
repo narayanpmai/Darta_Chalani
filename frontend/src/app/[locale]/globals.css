@@ -128,3 +128,11 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .nepali-date-picker-wrapper,
+  .nepali-date-picker-wrapper .nepali-datepicker,
+  .nepali-date-picker-wrapper input {
+    width: 100% !important;
+  }
+}

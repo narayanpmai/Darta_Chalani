@@ -48,11 +48,21 @@ export default function DartaPage() {
     // 1. Fetch Fiscal Year
     const fyStore = localStorage.getItem("lgoms_fiscal_years")
     if (fyStore) {
-      const parsed = JSON.parse(fyStore)
-      const active = parsed.find((f: any) => f.isActive)
-      if (active) {
-        setActiveFy(active.name)
-        setMiti(getDefaultDateForFiscalYear(active.name))
+      try {
+        const parsed = JSON.parse(fyStore)
+        if (Array.isArray(parsed)) {
+          const active = parsed.find((f: any) => f.isActive)
+          if (active) {
+            setActiveFy(active.name)
+            setMiti(getDefaultDateForFiscalYear(active.name))
+          }
+        } else {
+          setActiveFy("२०८२/०८३")
+          setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
+        }
+      } catch (e) {
+        setActiveFy("२०८२/०८३")
+        setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
       }
     } else {
       setActiveFy("२०८२/०८३")
@@ -73,7 +83,7 @@ export default function DartaPage() {
       const prefix = user?.ward && user.ward !== "0" 
         ? `W${user.ward}` 
         : "P";
-      setDartaNo(`${activeFy}-${prefix}-D-${dartaList.length + 1}`)
+      setDartaNo(`${prefix}-D-${dartaList.length + 1}`)
     }
   }, [activeFy, user, viewMode, dartaList, editId])
 
@@ -345,6 +355,7 @@ export default function DartaPage() {
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
+                <TableHead className="w-[60px] font-semibold">S.N.</TableHead>
                 <TableHead className="w-[180px] font-semibold">दर्ता नम्बर</TableHead>
                 <TableHead className="font-semibold">पठाउने कार्यालय / मिति</TableHead>
                 <TableHead className="font-semibold">विषय / बुझ्ने शाखा</TableHead>
@@ -353,8 +364,9 @@ export default function DartaPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dartaList.map((item) => (
+              {dartaList.map((item, index) => (
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
+                  <TableCell className="font-medium text-slate-500">{index + 1}</TableCell>
                   <TableCell className="font-medium">
                     {item.status === "प्रक्रियामा" ? (
                       <button 
@@ -405,7 +417,7 @@ export default function DartaPage() {
         <div className="grid gap-6 md:grid-cols-12">
           {/* Main Form Area */}
           <div className="md:col-span-8 space-y-6">
-            <Card className="shadow-sm border-slate-200">
+            <Card className="shadow-sm border-slate-200 overflow-visible">
               <CardHeader className="bg-slate-50/50 border-b pb-4">
                 <CardTitle className="text-xl text-slate-800">पत्रको विवरण</CardTitle>
                 <CardDescription>सबै अनिवार्य (*) विवरणहरू भर्नुहोस्</CardDescription>

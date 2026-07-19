@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ShieldCheck, XCircle } from "lucide-react"
+import { formatNepaliDate } from "@/lib/date-utils"
 
 export default function VerificationPage() {
   const searchParams = useSearchParams()
@@ -45,7 +46,7 @@ export default function VerificationPage() {
               <div className="bg-green-50 w-full p-4 rounded-md mt-4 border border-green-200 text-left text-sm">
                 <p><strong>Code:</strong> {code}</p>
                 <p><strong>Issued By:</strong> काठमाडौं महानगरपालिका</p>
-                <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+                <p><strong>Date:</strong> {formatNepaliDate()}</p>
               </div>
             </div>
           )}

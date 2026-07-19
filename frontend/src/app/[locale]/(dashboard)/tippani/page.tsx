@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Printer, Save, FileText, Send, CheckCircle2, User, Clock, Check, Cpu, Loader2, Search, Wand2, Lightbulb } from "lucide-react"
 import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
 import { aiAgentService } from "@/services/aiAgentService"
+import { formatNepaliDate } from "@/lib/date-utils"
 
 export default function TippaniPage() {
   const [isGenerating, setIsGenerating] = useState(false)
@@ -53,7 +54,7 @@ export default function TippaniPage() {
   }
 
   useEffect(() => {
-    setFormData(prev => ({ ...prev, miti: new Date().toLocaleDateString('ne-NP') }))
+    setFormData(prev => ({ ...prev, miti: formatNepaliDate() }))
   }, [])
 
   const handleInputChange = (field: string, value: string) => {

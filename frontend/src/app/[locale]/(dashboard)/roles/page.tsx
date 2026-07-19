@@ -34,13 +34,16 @@ export default function RolesPage() {
   const { isAdmin, isSuperAdmin } = useAuth()
   const [mounted, setMounted] = useState(false)
 
-  const [roles, setRoles] = useState<RoleCategory[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("lgoms_roles")
-      if (stored) return JSON.parse(stored)
+  const [roles, setRoles] = useState<RoleCategory[]>(SEED_ROLES)
+
+  useEffect(() => {
+    const stored = localStorage.getItem("lgoms_roles")
+    if (stored) {
+      try {
+        setRoles(JSON.parse(stored))
+      } catch (e) {}
     }
-    return SEED_ROLES
-  })
+  }, [])
 
   useEffect(() => { localStorage.setItem("lgoms_roles", JSON.stringify(roles)) }, [roles])
   useEffect(() => { setMounted(true) }, [])

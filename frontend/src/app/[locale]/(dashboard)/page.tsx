@@ -6,18 +6,7 @@ import { FileText, Send, AlertTriangle, FileSignature, FolderOpen, MessageSquare
 import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { ActivityTimeline } from "@/components/dashboard/activity-timeline"
 import { fetchApi } from "@/lib/api"
-
-function toNepaliNumber(num: number | string): string {
-  const nepaliDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"]
-  return num
-    .toString()
-    .split("")
-    .map(digit => {
-      const parsed = parseInt(digit)
-      return isNaN(parsed) ? digit : nepaliDigits[parsed]
-    })
-    .join("")
-}
+import { toNepaliNumber } from "@/lib/date-utils"
 
 function isToday(dateInput: any): boolean {
   if (!dateInput) return false

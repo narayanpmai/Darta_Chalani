@@ -25,13 +25,16 @@ export default function WardsPage() {
   const { isAdmin, isSuperAdmin } = useAuth()
   const [mounted, setMounted] = useState(false)
 
-  const [branches, setBranches] = useState<BranchCategory[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("lgoms_branches")
-      if (stored) return JSON.parse(stored)
+  const [branches, setBranches] = useState<BranchCategory[]>(SEED_BRANCHES)
+
+  useEffect(() => {
+    const stored = localStorage.getItem("lgoms_branches")
+    if (stored) {
+      try {
+        setBranches(JSON.parse(stored))
+      } catch (e) {}
     }
-    return SEED_BRANCHES
-  })
+  }, [])
 
   useEffect(() => { localStorage.setItem("lgoms_branches", JSON.stringify(branches)) }, [branches])
   useEffect(() => { setMounted(true) }, [])

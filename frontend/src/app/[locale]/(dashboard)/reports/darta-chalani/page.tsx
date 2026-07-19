@@ -50,7 +50,7 @@ export default function DartaChalaniReportPage() {
           dartaNo: item.dartaNumber,
           sender: item.senderName,
           subject: item.subject,
-          date: item.registrationDate ? item.registrationDate.split('T')[0] : "",
+          date: item.miti || (item.registrationDate ? item.registrationDate.split('T')[0] : ""),
           priority: item.priority || "सामान्य",
           status: item.status || "दर्ता भएको"
         }))
@@ -66,7 +66,7 @@ export default function DartaChalaniReportPage() {
           chalaniNo: item.chalaniNumber || item.dispatchNumber,
           receiver: item.receiverName,
           subject: item.subject,
-          date: item.dispatchDate ? item.dispatchDate.split('T')[0] : "",
+          date: item.miti || (item.dispatchDate ? item.dispatchDate.split('T')[0] : ""),
           method: item.deliveryMethod || "Physical",
           status: item.status || "स्वीकृत"
         }))
@@ -92,20 +92,29 @@ export default function DartaChalaniReportPage() {
     setEndDate("")
   }
 
+  // Normalize nepali date string for comparison: remove Devanagari digits, keep ASCII
+  const normalizeDate = (d: string) => {
+    if (!d) return ""
+    // Convert Nepali/Devanagari digits to ASCII digits
+    return d.replace(/[०-९]/g, (ch) => String(ch.charCodeAt(0) - 0x0966))
+  }
+
   // Filter lists
   const filteredDarta = dartaList.filter(item => {
     const matchSearch = [item.dartaNo, item.sender, item.subject].some(v => v?.toLowerCase().includes(search.toLowerCase()))
     const matchStatus = statusFilter === "all" || item.status === statusFilter
-    const matchStart = !startDate || item.date >= startDate
-    const matchEnd = !endDate || item.date <= endDate
+    const normDate = normalizeDate(item.date)
+    const matchStart = !startDate || normDate >= normalizeDate(startDate)
+    const matchEnd = !endDate || normDate <= normalizeDate(endDate)
     return matchSearch && matchStatus && matchStart && matchEnd
   })
 
   const filteredChalani = chalaniList.filter(item => {
     const matchSearch = [item.chalaniNo, item.receiver, item.subject].some(v => v?.toLowerCase().includes(search.toLowerCase()))
     const matchStatus = statusFilter === "all" || item.status === statusFilter
-    const matchStart = !startDate || item.date >= startDate
-    const matchEnd = !endDate || item.date <= endDate
+    const normDate = normalizeDate(item.date)
+    const matchStart = !startDate || normDate >= normalizeDate(startDate)
+    const matchEnd = !endDate || normDate <= normalizeDate(endDate)
     return matchSearch && matchStatus && matchStart && matchEnd
   })
 
@@ -189,7 +198,7 @@ export default function DartaChalaniReportPage() {
       </div>
 
       {/* Filters block */}
-      <Card className="border-slate-200 shadow-sm print:hidden">
+      <Card className="border-slate-200 shadow-sm print:hidden overflow-visible">
         <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-1.5 col-span-1 md:col-span-2">
             <Label className="text-xs font-bold text-gray-500 uppercase">खोज्नुहोस्</Label>

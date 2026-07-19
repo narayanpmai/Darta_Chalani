@@ -9,6 +9,7 @@ import { Printer, Save, FileText } from "lucide-react"
 import { NepaliDatePickerComponent } from "@/components/ui/nepali-date-picker"
 import NepaliDate from "nepali-datetime"
 import { fetchApi } from "@/lib/api"
+import { formatNepaliDate } from "@/lib/date-utils"
 
 export default function PatraLekhanPage() {
   const [formData, setFormData] = useState({
@@ -62,7 +63,7 @@ export default function PatraLekhanPage() {
     
     setFormData(prev => ({ 
       ...prev, 
-      miti: today.format('YYYY-MM-DD'),
+      miti: formatNepaliDate(),
       patraSankhya: activeFyName, 
       chalaniNo: defaultNo 
     }))

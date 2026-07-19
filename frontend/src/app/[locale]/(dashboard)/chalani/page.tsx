@@ -17,23 +17,28 @@ import { fetchApi } from "@/lib/api"
 
 // Helper: reads fileCategories from settings and renders SelectItems
 function FileCategorySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const getCategories = (): string[] => {
+  const [cats, setCats] = useState<string[]>([
+    "वार्षिक बजेट", "कर्मचारी प्रशासन", "योजना तथा विकास", "राजस्व तथा कर", "सामाजिक सेवा", "अन्य"
+  ])
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem("lgoms_settings")
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed.fileCategories) && parsed.fileCategories.length > 0) return parsed.fileCategories
-        if (typeof parsed.fileCategories === "string" && parsed.fileCategories.trim())
-          return parsed.fileCategories.split(",").map((s: string) => s.trim()).filter(Boolean)
+        if (Array.isArray(parsed.fileCategories) && parsed.fileCategories.length > 0) {
+          setCats(parsed.fileCategories)
+        } else if (typeof parsed.fileCategories === "string" && parsed.fileCategories.trim()) {
+          setCats(parsed.fileCategories.split(",").map((s: string) => s.trim()).filter(Boolean))
+        }
       }
     } catch {}
-    return ["\u0935\u093e\u0930\u094d\u0937\u093f\u0915 \u092c\u091c\u0947\u091f", "\u0915\u0930\u094d\u092e\u091a\u093e\u0930\u0940 \u092a\u094d\u0930\u0936\u093e\u0938\u0928", "\u092f\u094b\u091c\u0928\u093e \u0924\u0925\u093e \u0935\u093f\u0915\u093e\u0938", "\u0930\u093e\u091c\u0938\u094d\u0935 \u0924\u0925\u093e \u0915\u0930", "\u0938\u093e\u092e\u093e\u091c\u093f\u0915 \u0938\u0947\u0935\u093e", "\u0905\u0928\u094d\u092f"]
-  }
-  const cats = getCategories()
+  }, [])
+
   return (
     <Select value={value} onValueChange={(v: string | null) => { if (v) onChange(v) }}>
       <SelectTrigger className="border-slate-300">
-        <SelectValue placeholder="\u092b\u093e\u0907\u0932 \u0915\u093f\u0938\u093f\u092e \u091b\u093e\u0928\u094d\u0928\u0941\u0939\u094b\u0938\u094d..." />
+        <SelectValue placeholder="फाइल किसिम छान्नुहोस्..." />
       </SelectTrigger>
       <SelectContent>
         {cats.map((cat, i) => <SelectItem key={i} value={cat}>{cat}</SelectItem>)}
@@ -77,11 +82,21 @@ export default function ChalaniPage() {
     // 1. Fetch Fiscal Year
     const fyStore = localStorage.getItem("lgoms_fiscal_years")
     if (fyStore) {
-      const parsed = JSON.parse(fyStore)
-      const active = parsed.find((f: any) => f.isActive)
-      if (active) {
-        setActiveFy(active.name)
-        setMiti(getDefaultDateForFiscalYear(active.name))
+      try {
+        const parsed = JSON.parse(fyStore)
+        if (Array.isArray(parsed)) {
+          const active = parsed.find((f: any) => f.isActive)
+          if (active) {
+            setActiveFy(active.name)
+            setMiti(getDefaultDateForFiscalYear(active.name))
+          }
+        } else {
+          setActiveFy("२०८२/०८३")
+          setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
+        }
+      } catch (e) {
+        setActiveFy("२०८२/०८३")
+        setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
       }
     } else {
       setActiveFy("२०८२/०८३")
@@ -102,7 +117,7 @@ export default function ChalaniPage() {
       const prefix = user?.ward && user.ward !== "0" 
         ? `W${user.ward}` 
         : "P";
-      setChalaniNo(`${activeFy}-${prefix}-C-${chalaniList.length + 1}`)
+      setChalaniNo(`${prefix}-C-${chalaniList.length + 1}`)
     }
   }, [activeFy, user, viewMode, chalaniList, editId])
 
@@ -365,6 +380,7 @@ export default function ChalaniPage() {
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
+                <TableHead className="w-[60px] font-semibold">S.N.</TableHead>
                 <TableHead className="w-[180px] font-semibold">चलानी नम्बर</TableHead>
                 <TableHead className="font-semibold">प्राप्तकर्ता कार्यालय</TableHead>
                 <TableHead className="font-semibold">विषय</TableHead>
@@ -374,8 +390,9 @@ export default function ChalaniPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {chalaniList.map((item) => (
+              {chalaniList.map((item, index) => (
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
+                  <TableCell className="font-medium text-slate-500">{index + 1}</TableCell>
                   <TableCell className="font-medium">
                     {item.status === "प्रक्रियामा" ? (
                       <button 
@@ -416,7 +433,7 @@ export default function ChalaniPage() {
         <div className="grid gap-6 md:grid-cols-12">
           {/* Main Form Area */}
           <div className="md:col-span-8 space-y-6">
-            <Card className="shadow-sm border-slate-200">
+            <Card className="shadow-sm border-slate-200 overflow-visible">
               <CardHeader className="bg-slate-50/50 border-b pb-4">
                 <CardTitle className="text-xl text-slate-800">नयाँ चलानी सिर्जना फारम (ई-चलानी)</CardTitle>
                 <CardDescription>चलानी गरिने पत्रको विवरण भर्नुहोस्। (*) ले अनिवार्य जनाउँछ।</CardDescription>

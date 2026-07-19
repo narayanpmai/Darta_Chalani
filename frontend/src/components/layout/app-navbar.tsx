@@ -62,7 +62,7 @@ export function AppNavbar() {
 
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "AD"
+    : "LG"
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 shadow-sm">
@@ -129,8 +129,8 @@ export function AppNavbar() {
           <DropdownMenuContent className="w-52" align="end" sideOffset={8}>
             {/* User info header */}
             <div className="px-2 py-1.5 border-b mb-1">
-              <p className="font-semibold text-sm">{user?.name ?? "Admin User"}</p>
-              <p className="text-xs text-muted-foreground">{user?.username ? `${user.username}@lgoms.gov.np` : "admin@lgoms.gov.np"}</p>
+              <p className="font-semibold text-sm">{user?.name ?? "LGOMS User"}</p>
+              <p className="text-xs text-muted-foreground">{user?.username ? `${user.username}@lgoms.gov.np` : ""}</p>
             </div>
             <DropdownMenuItem className="cursor-pointer gap-2">
               <User className="h-4 w-4 text-blue-500" />

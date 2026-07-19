@@ -100,11 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const storedRoles = localStorage.getItem("lgoms_roles")
       const rolesList = storedRoles ? JSON.parse(storedRoles) : []
-      const roleObj = found.roleId ? rolesList.find((r: any) => r.id === found.roleId) : null
+      const roleObj = found.roleId !== undefined && found.roleId !== null ? rolesList.find((r: any) => r.id === found.roleId) : null
       
       const storedBranches = localStorage.getItem("lgoms_branches")
       const branchesList = storedBranches ? JSON.parse(storedBranches) : []
-      const branchObj = found.branchId ? branchesList.find((b: any) => b.id === found.branchId) : null
+      const branchObj = found.branchId !== undefined && found.branchId !== null ? branchesList.find((b: any) => b.id === found.branchId) : null
 
       const authUser: AuthUser = {
         id: found.id,
