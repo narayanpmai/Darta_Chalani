@@ -10,6 +10,7 @@ namespace LGOMS.Application.Features.Darta.Commands;
 public class CreateDartaCommand : IRequest<Guid>
 {
     // ── मिति ──────────────────────────────────────────────────────────────────
+    public string? DartaNumber { get; set; }                       // Форमेट गरिएको दर्ता नम्बर
     public DateTime RegistrationDate { get; set; }
     public string Miti { get; set; } = string.Empty;           // दर्ता मिति (BS)
 
@@ -60,8 +61,9 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
         var tenantId = _tenantService.GetTenantId();
         var fiscalYearId = _fiscalYearService.GetFiscalYearId();
 
-        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(
-            tenantId, null, fiscalYearId, "Darta");
+        string generatedNumber = string.IsNullOrWhiteSpace(request.DartaNumber)
+            ? await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, null, fiscalYearId, "Darta")
+            : request.DartaNumber;
 
         var entity = new LGOMS.Domain.Entities.Darta
         {

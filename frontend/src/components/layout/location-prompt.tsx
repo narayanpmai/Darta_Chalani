@@ -26,7 +26,12 @@ export function LocationPrompt() {
   }, [user])
 
   const handleShare = () => {
-    if ("geolocation" in navigator) {
+    if (!window.isSecureContext) {
+      alert("सुरक्षा कारणले गर्दा Location Share गर्न HTTPS वा localhost आवश्यक पर्छ। (Browser Security Restriction)");
+      return;
+    }
+
+    if (navigator.geolocation) {
       setLocating(true)
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -54,7 +59,7 @@ export function LocationPrompt() {
         },
         (error) => {
           console.error("Error getting location:", error)
-          alert("Could not get your location. Please check browser permissions.")
+          alert("Could not get your location. Please check browser permissions or ensure you are using HTTPS.")
           setLocating(false)
         }
       )

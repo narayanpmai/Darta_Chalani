@@ -10,6 +10,7 @@ namespace LGOMS.Application.Features.Chalani.Commands;
 public class CreateChalaniCommand : IRequest<Guid>
 {
     // ── मिति ──────────────────────────────────────────────────────────────────
+    public string? ChalaniNumber { get; set; }                     // Форमेट गरिएको चलानी नम्बर
     public DateTime DispatchDate { get; set; }
     public string Miti { get; set; } = string.Empty;               // चलानी मिति (BS)
 
@@ -64,8 +65,9 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
         var tenantId = _tenantService.GetTenantId();
         var fiscalYearId = _fiscalYearService.GetFiscalYearId();
 
-        var generatedNumber = await _sequenceGenerator.GenerateNextSequenceAsync(
-            tenantId, null, fiscalYearId, "Chalani");
+        string generatedNumber = string.IsNullOrWhiteSpace(request.ChalaniNumber)
+            ? await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, null, fiscalYearId, "Chalani")
+            : request.ChalaniNumber;
 
         var entity = new LGOMS.Domain.Entities.Chalani
         {

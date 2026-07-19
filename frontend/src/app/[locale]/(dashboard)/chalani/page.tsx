@@ -103,13 +103,7 @@ export default function ChalaniPage() {
       setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
     }
 
-    // Load initial list from cache
-    const cached = localStorage.getItem("lgoms_chalanis")
-    if (cached) {
-      try {
-        setChalaniList(JSON.parse(cached))
-      } catch {}
-    }
+    // Backend is fully functional; no local cache load needed.
   }, [])
 
   useEffect(() => {
@@ -117,16 +111,11 @@ export default function ChalaniPage() {
       const prefix = user?.ward && user.ward !== "0" 
         ? `W${user.ward}` 
         : "P";
-      setChalaniNo(`${prefix}-C-${chalaniList.length + 1}`)
+      setChalaniNo(`${activeFy}-${prefix}-C-${chalaniList.length + 1}`)
     }
   }, [activeFy, user, viewMode, chalaniList, editId])
 
-  // Sync to local storage
-  useEffect(() => {
-    if (chalaniList.length > 0) {
-      localStorage.setItem("lgoms_chalanis", JSON.stringify(chalaniList))
-    }
-  }, [chalaniList])
+  // Cache logic removed - we rely purely on backend state
 
   // Fetch Chalani list from backend API with local cache fallback
   useEffect(() => {
@@ -151,21 +140,13 @@ export default function ChalaniPage() {
                tokAdeshPerson: item.orderOrDecision
              }));
              setChalaniList(formattedList);
-             localStorage.setItem("lgoms_chalanis", JSON.stringify(formattedList));
           } else if (Array.isArray(data) && data.length === 0) {
-             // Keep cache if backend has no records
-             const cached = localStorage.getItem("lgoms_chalanis")
-             if (cached) {
-               try { setChalaniList(JSON.parse(cached)) } catch {}
-             }
+             setChalaniList([]);
           }
         })
         .catch(err => {
-          console.error("Failed to fetch chalani list, using cache:", err);
-          const cached = localStorage.getItem("lgoms_chalanis")
-          if (cached) {
-            try { setChalaniList(JSON.parse(cached)) } catch {}
-          }
+          console.error("Failed to fetch chalani list:", err);
+          setChalaniList([]);
         })
         .finally(() => {
           setIsSubmitting(false);
@@ -233,11 +214,11 @@ export default function ChalaniPage() {
     setIsSubmitting(true)
 
     try {
-      // Build the command object
       const command = {
         DispatchDate: new Date().toISOString(),
         Miti: miti,
         ReceiverName: formData.recipientName,
+        ReceiverAddress: formData.recipientAddress,
         Subject: formData.subject,
         Status: formData.approvalStatus,
         TokAdeshPerson: formData.tokAdeshPerson,
@@ -245,89 +226,41 @@ export default function ChalaniPage() {
       };
 
       let resultId: string = "";
-      try {
-        if (editId) {
-          // Edit mode
-          try {
-            await fetchApi(`/Chalani/${editId}`, {
-              method: 'PUT',
-              body: JSON.stringify(command)
-            });
-            resultId = editId;
-          } catch (putErr) {
-            console.warn("PUT failed, updating local state", putErr);
-            resultId = editId;
-          }
-          
-          const localItem = {
-            id: editId,
-            chalaniNo: chalaniNo,
-            miti: miti,
-            letterDate: formData.letterDate,
-            recipientName: formData.recipientName,
-            receiver: formData.recipientName,
-            recipientAddress: formData.recipientAddress,
-            remarks: formData.remarks,
-            subject: formData.subject,
-            method: "Physical",
-            status: formData.approvalStatus,
-            relatedFile: formData.relatedFile,
-            tokAdeshPerson: formData.tokAdeshPerson
-          };
-          setChalaniList(prev => prev.map(u => u.id === editId ? localItem : u));
-        } else {
-          // Create mode
-          const result = await fetchApi('/Chalani', {
-            method: 'POST',
-            body: JSON.stringify(command)
-          });
-          resultId = result.id;
-        }
-        
-        // Refetch list after successful backend operation
-        const freshData = await fetchApi('/Chalani');
-        if (Array.isArray(freshData)) {
-          setChalaniList(freshData.map(item => ({
-            id: item.id,
-            chalaniNo: item.chalaniNumber || item.dispatchNumber,
-            miti: item.miti,
-            letterDate: item.dispatchDate,
-            recipientName: item.receiverName,
-            receiver: item.receiverName,
-            recipientAddress: item.receiverAddress,
-            remarks: item.remarks,
-            subject: item.subject,
-            method: item.deliveryMethod || "Physical",
-            status: item.status || "स्वीकृत",
-            relatedFile: item.attachmentUrl,
-            tokAdeshPerson: item.orderOrDecision
-          })));
-        }
-      } catch (backendError) {
-        console.warn("Backend Chalani POST/PUT failed, using local state", backendError);
-        resultId = editId || Date.now().toString();
-        
-        const localItem = {
-          id: resultId,
-          chalaniNo: chalaniNo,
-          miti: miti,
-          letterDate: formData.letterDate,
-          recipientName: formData.recipientName,
-          receiver: formData.recipientName,
-          recipientAddress: formData.recipientAddress,
-          remarks: formData.remarks,
-          subject: formData.subject,
-          method: "Physical",
-          status: formData.approvalStatus,
-          relatedFile: formData.relatedFile,
-          tokAdeshPerson: formData.tokAdeshPerson
-        };
-
-        if (editId) {
-          setChalaniList(prev => prev.map(u => u.id === editId ? localItem : u));
-        } else {
-          setChalaniList(prev => [...prev, localItem]);
-        }
+      if (editId) {
+        // Edit mode
+        await fetchApi(`/Chalani/${editId}`, {
+          method: 'PUT',
+          body: JSON.stringify(command)
+        });
+        resultId = editId;
+      } else {
+        // Create mode
+        const createCmd = { ...command, ChalaniNumber: chalaniNo };
+        const result = await fetchApi('/Chalani', {
+          method: 'POST',
+          body: JSON.stringify(createCmd)
+        });
+        resultId = result.id;
+      }
+      
+      // Refetch list after successful backend operation
+      const freshData = await fetchApi('/Chalani');
+      if (Array.isArray(freshData)) {
+        setChalaniList(freshData.map(item => ({
+          id: item.id,
+          chalaniNo: item.chalaniNumber || item.dispatchNumber,
+          miti: item.miti,
+          letterDate: item.dispatchDate,
+          recipientName: item.receiverName,
+          receiver: item.receiverName,
+          recipientAddress: item.receiverAddress,
+          remarks: item.remarks,
+          subject: item.subject,
+          method: item.deliveryMethod || "Physical",
+          status: item.status || "स्वीकृत",
+          relatedFile: item.attachmentUrl,
+          tokAdeshPerson: item.orderOrDecision
+        })));
       }
       
       alert(editId ? "चलानी विवरण सम्पादन गरियो!" : "चलानी सफल भयो! नयाँ चलानी ID: " + resultId)

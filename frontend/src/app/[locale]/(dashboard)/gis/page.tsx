@@ -36,16 +36,22 @@ export default function GisDashboardPage() {
   }
 
   const handleGetLocation = () => {
-    if ("geolocation" in navigator) {
+    if (!window.isSecureContext) {
+      alert("सुरक्षा कारणले गर्दा Location Share गर्न HTTPS वा localhost आवश्यक पर्छ। (Browser Security Restriction)");
+      return;
+    }
+
+    if (navigator.geolocation) {
       setLocating(true)
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const lat = position.coords.latitude
           const lng = position.coords.longitude
+          const str = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
           setUserLocation({ lat, lng })
-          setLocationStr(`${lat.toFixed(6)}, ${lng.toFixed(6)}`)
+          setLocationStr(str)
           
-          // Mock Backend Save
+          // Save to backend mock
           const backendData = JSON.parse(localStorage.getItem('lgoms_backend_locations') || '[]')
           backendData.push({
             userId: user?.id || 'guest',
@@ -61,7 +67,7 @@ export default function GisDashboardPage() {
         },
         (error) => {
           console.error("Error getting location:", error)
-          alert("Could not get your location. Please check browser permissions.")
+          alert("Could not get your location. Please check browser permissions or ensure you are using HTTPS.")
           setLocating(false)
         }
       )

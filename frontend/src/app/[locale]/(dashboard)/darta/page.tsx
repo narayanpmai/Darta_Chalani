@@ -69,13 +69,7 @@ export default function DartaPage() {
       setMiti(getDefaultDateForFiscalYear("२०८२/०८३"))
     }
 
-    // Load initial list from cache
-    const cached = localStorage.getItem("lgoms_dartas")
-    if (cached) {
-      try {
-        setDartaList(JSON.parse(cached))
-      } catch {}
-    }
+    // Backend is fully functional; no local cache load needed.
   }, [])
 
   useEffect(() => {
@@ -83,16 +77,11 @@ export default function DartaPage() {
       const prefix = user?.ward && user.ward !== "0" 
         ? `W${user.ward}` 
         : "P";
-      setDartaNo(`${prefix}-D-${dartaList.length + 1}`)
+      setDartaNo(`${activeFy}-${prefix}-D-${dartaList.length + 1}`)
     }
   }, [activeFy, user, viewMode, dartaList, editId])
 
-  // Sync to local storage
-  useEffect(() => {
-    if (dartaList.length > 0) {
-      localStorage.setItem("lgoms_dartas", JSON.stringify(dartaList))
-    }
-  }, [dartaList])
+  // Cache logic removed - we rely purely on backend state
 
   // Fetch Darta list from backend API with local cache fallback
   useEffect(() => {
@@ -118,21 +107,13 @@ export default function DartaPage() {
                relatedFile: item.attachmentUrl
              }));
              setDartaList(formattedList);
-             localStorage.setItem("lgoms_dartas", JSON.stringify(formattedList));
           } else if (Array.isArray(data) && data.length === 0) {
-             // Keep cache if backend has no records
-             const cached = localStorage.getItem("lgoms_dartas")
-             if (cached) {
-               try { setDartaList(JSON.parse(cached)) } catch {}
-             }
+             setDartaList([]);
           }
         })
         .catch(err => {
-          console.error("Failed to fetch darta list, using cache:", err);
-          const cached = localStorage.getItem("lgoms_dartas")
-          if (cached) {
-            try { setDartaList(JSON.parse(cached)) } catch {}
-          }
+          console.error("Failed to fetch darta list:", err);
+          setDartaList([]);
         })
         .finally(() => {
           setIsSubmitting(false);
@@ -225,41 +206,20 @@ export default function DartaPage() {
       };
 
       let resultId: string = "";
-      try {
         if (editId) {
           // Edit mode
-          try {
-            await fetchApi(`/Darta/${editId}`, {
-              method: 'PUT',
-              body: JSON.stringify(command)
-            });
-            resultId = editId;
-          } catch (putErr) {
-            console.warn("PUT failed, updating local state", putErr);
-            resultId = editId;
-          }
-          
-          const localItem = {
-            id: editId,
-            dartaNo: dartaNo,
-            miti: miti,
-            letterDate: formData.letterDate,
-            senderName: formData.senderName,
-            senderAddress: formData.senderAddress,
-            senderDispatchNo: formData.senderDispatchNo,
-            remarks: formData.remarks,
-            receiverEmail: formData.receiverEmail,
-            receivingBranch: formData.receivingBranch,
-            status: formData.status,
-            subject: formData.subject,
-            priority: "Normal"
-          };
-          setDartaList(prev => prev.map(u => u.id === editId ? localItem : u));
+          await fetchApi(`/Darta/${editId}`, {
+            method: 'PUT',
+            body: JSON.stringify(command)
+          });
+          resultId = editId;
         } else {
           // Create mode
+          // Pass the frontend formatted DartaNumber in the command!
+          const createCmd = { ...command, DartaNumber: dartaNo };
           const result = await fetchApi('/Darta', {
             method: 'POST',
-            body: JSON.stringify(command)
+            body: JSON.stringify(createCmd)
           });
           resultId = result.id;
         }
@@ -284,11 +244,6 @@ export default function DartaPage() {
             relatedFile: item.attachmentUrl
           })));
         }
-      } catch (backendError) {
-        console.warn("Backend Darta POST/PUT failed, using local state", backendError);
-        resultId = editId || Date.now().toString();
-        
-        const localItem = {
           id: resultId,
           dartaNo: dartaNo,
           miti: miti,
