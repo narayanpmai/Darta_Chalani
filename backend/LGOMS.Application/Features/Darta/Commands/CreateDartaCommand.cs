@@ -30,8 +30,9 @@ public class CreateDartaCommand : IRequest<Guid>
     public string? ForwardedToDepartment { get; set; }         // बुझ्ने फाँट/शाखा
     public string? HandledBy { get; set; }                     // बुझिलिनेको नाम (NAMS)
 
-    // ── प्राथमिकता र कैफियत ──────────────────────────────────────────────
+    // ── प्राथमिकता र स्थिति र कैफियत ──────────────────────────────────────────────
     public string Priority { get; set; } = "Normal";
+    public string Status { get; set; } = "Pending";
     public string? Remarks { get; set; }                       // कैफियत
     public string? AttachmentUrl { get; set; }                 // संलग्न फाइल
     public string? EntryTime { get; set; }
@@ -68,23 +69,24 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
         var entity = new LGOMS.Domain.Entities.Darta
         {
             DartaNumber = generatedNumber,
-            RegistrationDate = request.RegistrationDate,
+            RegistrationDate = request.RegistrationDate == default ? DateTime.UtcNow : request.RegistrationDate,
             Miti = request.Miti,
             ReceivedLetterDate = request.ReceivedLetterDate,
             ReceivedLetterNumber = request.ReceivedLetterNumber,
             SenderName = request.SenderName,
             SenderAddress = request.SenderAddress,
             Subject = request.Subject,
-            LetterType = request.LetterType,
+            LetterType = string.IsNullOrWhiteSpace(request.LetterType) ? "General" : request.LetterType,
             ForwardedToDepartment = request.ForwardedToDepartment,
             HandledBy = request.HandledBy,
-            Priority = request.Priority,
-            Status = "Pending",
+            Priority = string.IsNullOrWhiteSpace(request.Priority) ? "Normal" : request.Priority,
+            Status = string.IsNullOrWhiteSpace(request.Status) ? "Pending" : request.Status,
             Remarks = request.Remarks,
             AttachmentUrl = request.AttachmentUrl,
             EntryTime = request.EntryTime,
             FiscalYearId = fiscalYearId
         };
+
 
         _context.Dartas.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);

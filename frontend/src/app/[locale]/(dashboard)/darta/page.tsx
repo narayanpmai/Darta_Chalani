@@ -183,6 +183,40 @@ export default function DartaPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("के तपाईं यो दर्ता विवरण हटाउन चाहनुहुन्छ?")) return;
+    setIsSubmitting(true);
+    try {
+      await fetchApi(`/Darta/${id}`, { method: 'DELETE' });
+      alert("दर्ता विवरण सफलतापूर्वक हटाइयो।");
+      const freshData = await fetchApi('/Darta');
+      if (Array.isArray(freshData)) {
+        setDartaList(freshData.map(item => ({
+          id: item.id,
+          dartaNo: item.dartaNumber,
+          miti: item.miti,
+          letterDate: item.receivedLetterDate,
+          senderName: item.senderName,
+          sender: item.senderName,
+          senderAddress: item.senderAddress,
+          senderDispatchNo: item.receivedLetterNumber,
+          remarks: item.remarks,
+          receivingBranch: item.forwardedToDepartment,
+          status: item.status || "दर्ता भएको",
+          subject: item.subject,
+          priority: item.priority || "सामान्य",
+          relatedFile: item.attachmentUrl
+        })));
+      } else {
+        setDartaList([]);
+      }
+    } catch (err: any) {
+      alert("हटाउन असफल: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (!formData.senderName || !formData.senderAddress || !formData.subject || !formData.senderDispatchNo) {
       alert("कृपया सबै अनिवार्य (*) विवरणहरू भर्नुहोस्।")
@@ -197,11 +231,14 @@ export default function DartaPage() {
         RegistrationDate: new Date().toISOString(),
         Miti: miti,
         SenderName: formData.senderName,
+        SenderAddress: formData.senderAddress,
         Subject: formData.subject,
+        LetterType: formData.letterType || "General",
+        ReceivedLetterDate: formData.letterDate,
+        ReceivedLetterNumber: formData.senderDispatchNo,
+        ForwardedToDepartment: formData.receivingBranch,
         Priority: "Normal",
         Status: formData.status,
-        ForwardedToDepartment: formData.receivingBranch,
-        ReceivedLetterNumber: formData.senderDispatchNo,
         Remarks: formData.remarks
       };
 
@@ -215,7 +252,6 @@ export default function DartaPage() {
           resultId = editId;
         } else {
           // Create mode
-          // Pass the frontend formatted DartaNumber in the command!
           const createCmd = { ...command, DartaNumber: dartaNo };
           const result = await fetchApi('/Darta', {
             method: 'POST',
@@ -244,27 +280,7 @@ export default function DartaPage() {
             relatedFile: item.attachmentUrl
           })));
         }
-          id: resultId,
-          dartaNo: dartaNo,
-          miti: miti,
-          letterDate: formData.letterDate,
-          senderName: formData.senderName,
-          senderAddress: formData.senderAddress,
-          senderDispatchNo: formData.senderDispatchNo,
-          remarks: formData.remarks,
-          receiverEmail: formData.receiverEmail,
-          receivingBranch: formData.receivingBranch,
-          status: formData.status,
-          subject: formData.subject,
-          priority: "Normal"
-        };
 
-        if (editId) {
-          setDartaList(prev => prev.map(u => u.id === editId ? localItem : u));
-        } else {
-          setDartaList(prev => [...prev, localItem]);
-        }
-      }
       
       alert(editId ? "दर्ता विवरण सम्पादन गरियो!" : "दर्ता सफल भयो! नयाँ दर्ता ID: " + resultId)
       setViewMode("list")
@@ -312,10 +328,11 @@ export default function DartaPage() {
               <TableRow>
                 <TableHead className="w-[60px] font-semibold">S.N.</TableHead>
                 <TableHead className="w-[180px] font-semibold">दर्ता नम्बर</TableHead>
-                <TableHead className="font-semibold">पठाउने कार्यालय / मिति</TableHead>
-                <TableHead className="font-semibold">विषय / बुझ्ने शाखा</TableHead>
+                <TableHead className="font-semibold">पठाउने कार्यालय / ठेगाना</TableHead>
+                <TableHead className="font-semibold">विषय / शाखा</TableHead>
                 <TableHead className="font-semibold">प्राथमिकता</TableHead>
-                <TableHead className="text-right font-semibold">स्थिति</TableHead>
+                <TableHead className="font-semibold">स्थिति</TableHead>
+                <TableHead className="text-right font-semibold">कार्य (Actions)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -323,24 +340,20 @@ export default function DartaPage() {
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
                   <TableCell className="font-medium text-slate-500">{index + 1}</TableCell>
                   <TableCell className="font-medium">
-                    {item.status === "प्रक्रियामा" ? (
-                      <button 
-                        onClick={() => handleEdit(item)}
-                        className="text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1"
-                      >
-                        {item.dartaNo}
-                      </button>
-                    ) : (
-                      <span className="text-slate-500 font-medium">{item.dartaNo}</span>
-                    )}
+                    <button 
+                      onClick={() => handleEdit(item)}
+                      className="text-blue-600 hover:text-blue-800 underline font-semibold text-left"
+                    >
+                      {item.dartaNo}
+                    </button>
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{item.sender}</div>
-                    <div className="text-xs text-muted-foreground">{miti}</div>
+                    <div className="text-xs text-muted-foreground">{item.senderAddress || item.miti}</div>
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{item.subject}</div>
-                    <div className="text-xs text-muted-foreground">प्रशासन शाखा</div>
+                    <div className="text-xs text-muted-foreground">{item.receivingBranch || "प्रशासन शाखा"}</div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={
@@ -351,7 +364,7 @@ export default function DartaPage() {
                       {item.priority}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <Badge variant="secondary" className={
                       item.status === "प्रक्रियामा" ? "bg-orange-100 text-orange-700 hover:bg-orange-200" :
                       item.status === "दर्ता भएको" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : 
@@ -360,6 +373,14 @@ export default function DartaPage() {
                     }>
                       {item.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="text-xs">
+                      सम्पादन
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)} className="text-xs">
+                      हटाउनुहोस्
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

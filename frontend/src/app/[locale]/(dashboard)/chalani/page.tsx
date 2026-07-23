@@ -205,6 +205,40 @@ export default function ChalaniPage() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("के तपाईं यो चलानी विवरण हटाउन चाहनुहुन्छ?")) return;
+    setIsSubmitting(true);
+    try {
+      await fetchApi(`/Chalani/${id}`, { method: 'DELETE' });
+      alert("चलानी विवरण सफलतापूर्वक हटाइयो।");
+      const freshData = await fetchApi('/Chalani');
+      if (Array.isArray(freshData)) {
+        setChalaniList(freshData.map(item => ({
+          id: item.id,
+          chalaniNo: item.chalaniNumber || item.dispatchNumber,
+          miti: item.miti,
+          letterDate: item.dispatchDate,
+          recipientName: item.receiverName,
+          receiver: item.receiverName,
+          recipientAddress: item.receiverAddress,
+          remarks: item.remarks,
+          subject: item.subject,
+          method: item.deliveryMethod || "Physical",
+          status: item.status || "Dispatched",
+          relatedFile: item.attachmentUrl,
+          tokAdeshPerson: item.orderOrDecision
+        })));
+      } else {
+        setChalaniList([]);
+      }
+    } catch (err: any) {
+      alert("हटाउन असफल: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
   const handleDispatch = async () => {
     if (!formData.recipientName || !formData.recipientAddress || !formData.subject) {
       alert("कृपया सबै अनिवार्य (*) विवरणहरू भर्नुहोस्।")
@@ -319,7 +353,8 @@ export default function ChalaniPage() {
                 <TableHead className="font-semibold">विषय</TableHead>
                 <TableHead className="font-semibold">चलानी मिति</TableHead>
                 <TableHead className="font-semibold">निकासा माध्यम</TableHead>
-                <TableHead className="text-right font-semibold">स्थिति</TableHead>
+                <TableHead className="font-semibold">स्थिति</TableHead>
+                <TableHead className="text-right font-semibold">कार्य (Actions)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -327,33 +362,37 @@ export default function ChalaniPage() {
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
                   <TableCell className="font-medium text-slate-500">{index + 1}</TableCell>
                   <TableCell className="font-medium">
-                    {item.status === "प्रक्रियामा" ? (
-                      <button 
-                        onClick={() => handleEdit(item)}
-                        className="text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1"
-                      >
-                        {item.chalaniNo}
-                      </button>
-                    ) : (
-                      <span className="text-slate-500 font-medium">{item.chalaniNo}</span>
-                    )}
+                    <button 
+                      onClick={() => handleEdit(item)}
+                      className="text-blue-600 hover:text-blue-800 underline font-semibold text-left"
+                    >
+                      {item.chalaniNo}
+                    </button>
                   </TableCell>
                   <TableCell className="font-medium">{item.receiver}</TableCell>
                   <TableCell>
                     <div className="font-medium truncate max-w-[200px]">{item.subject}</div>
                   </TableCell>
-                  <TableCell>{miti}</TableCell>
+                  <TableCell>{item.miti || miti}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
                       {item.method}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <Badge variant="secondary" className={
-                      item.status === "स्वीकृत" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                      item.status === "Dispatched" || item.status === "स्वीकृत" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
                     }>
                       {item.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="text-xs">
+                      सम्पादन
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)} className="text-xs">
+                      हटाउनुहोस्
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

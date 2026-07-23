@@ -37,6 +37,7 @@ public class CreateChalaniCommand : IRequest<Guid>
     public string? OrderOrDecision { get; set; }                   // आदेश/निर्णय
 
     // ── कैफियत र संलग्न ────────────────────────────────────────────────────
+    public string Status { get; set; } = "Dispatched";
     public string? Remarks { get; set; }
     public string? AttachmentUrl { get; set; }
 }
@@ -72,15 +73,15 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
         var entity = new LGOMS.Domain.Entities.Chalani
         {
             ChalaniNumber = generatedNumber,
-            DispatchDate = request.DispatchDate,
+            DispatchDate = request.DispatchDate == default ? DateTime.UtcNow : request.DispatchDate,
             Miti = request.Miti,
             LetterNumber = request.LetterNumber,
             ReceiverName = request.ReceiverName,
             ReceiverAddress = request.ReceiverAddress,
             Subject = request.Subject,
             OriginatingDepartment = request.OriginatingDepartment,
-            DeliveryMethod = request.DeliveryMethod,
-            Status = "Dispatched",
+            DeliveryMethod = string.IsNullOrWhiteSpace(request.DeliveryMethod) ? "Physical" : request.DeliveryMethod,
+            Status = string.IsNullOrWhiteSpace(request.Status) ? "Dispatched" : request.Status,
             ReferenceDartaNumber = request.ReferenceDartaNumber,
             PeonBookNumber = request.PeonBookNumber,
             DispatchTime = request.DispatchTime,
@@ -89,6 +90,7 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
             AttachmentUrl = request.AttachmentUrl,
             FiscalYearId = fiscalYearId
         };
+
 
         _context.Chalanis.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);

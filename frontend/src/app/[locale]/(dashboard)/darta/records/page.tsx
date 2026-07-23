@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAuth } from "@/lib/auth-context"
+import { fetchApi } from "@/lib/api"
 import { BookOpen } from "lucide-react"
 
 interface DartaRecord {
@@ -39,19 +40,15 @@ export default function DartaRecordsPage() {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
-        const token = localStorage.getItem("lgoms_token")
-        const res = await fetch(`${apiUrl}/Darta`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        })
-        if (res.ok) {
-          const data = await res.json()
+        const data = await fetchApi('/Darta')
+        if (Array.isArray(data)) {
           setRecords(data)
+        } else {
+          setRecords([])
         }
       } catch (error) {
         console.error("Failed to fetch Darta records:", error)
+        setRecords([])
       } finally {
         setLoading(false)
       }
@@ -61,6 +58,7 @@ export default function DartaRecordsPage() {
       fetchRecords()
     }
   }, [user, activeFy])
+
 
   return (
     <div className="space-y-6">

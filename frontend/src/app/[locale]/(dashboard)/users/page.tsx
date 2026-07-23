@@ -111,7 +111,7 @@ function UsersManagementContent() {
           name: u.fullName || "",
           email: u.email || "",
           roleId: u.role || "Operator",
-          branchId: u.wardId || "null",
+          branchId: u.wardId ? String(u.wardId).toLowerCase() : "null",
           status: u.isActive ? "Active" : "Disabled",
           joined: new Date(u.createdAt).toLocaleDateString(),
           username: u.username,
@@ -136,8 +136,9 @@ function UsersManagementContent() {
             const wardNum = w.wardNumber || w.WardNumber;
             const wName = w.name || w.Name;
             const wNameEn = w.nameEn || w.NameEn;
+            const rawId = w.id || w.Id;
             return {
-              id: w.id || w.Id,
+              id: String(rawId).toLowerCase(),
               name: wName || `वडा नं. ${wardNum}`,
               nameEn: wNameEn || `Ward No. ${wardNum}`,
               type: "ward" as const
@@ -150,6 +151,7 @@ function UsersManagementContent() {
       console.error("Failed to load wards from API", err);
     }
   };
+
 
   useEffect(() => {
     fetchUsers();
@@ -206,13 +208,16 @@ function UsersManagementContent() {
 
   const openEditUser = (u: StaffUser) => {
     setEditUserId(u.id)
+    const matchedRole = getRole(u.roleId)
+    const matchedBranch = getBranch(u.branchId)
+
     setUForm({ 
       employeeCode: u.employeeCode || "", 
       name: u.name || "", 
       email: u.email || "", 
       username: u.username || "", 
-      roleId: String(u.roleId || ""), 
-      branchId: String(u.branchId || ""), 
+      roleId: matchedRole ? matchedRole.id : String(u.roleId || ""), 
+      branchId: matchedBranch ? String(matchedBranch.id) : (u.branchId ? String(u.branchId).toLowerCase() : "null"), 
       status: u.status || "Active", 
       mfaStatus: u.mfaStatus || "Disabled" 
     })
@@ -221,6 +226,7 @@ function UsersManagementContent() {
     setModalTab("info")
     setUserModal(true)
   }
+
 
   const validateUser = () => {
     const e: Record<string, string> = {}
@@ -380,12 +386,25 @@ function UsersManagementContent() {
     return matchSearch && matchRole && matchStatus && matchBranch
   })
 
-  const getRole   = (id: string) => roles.find(r => r.id === id)
-  const getBranch = (id: string) => branches.find(b => b.id === id)
+  const getRole = (id: string) => {
+    if (!id) return undefined;
+    const cleanId = String(id).replace(/\s+/g, "").toLowerCase();
+    return roles.find(r => 
+      String(r.id).replace(/\s+/g, "").toLowerCase() === cleanId ||
+      String(r.name).replace(/\s+/g, "").toLowerCase() === cleanId
+    );
+  }
+
+  const getBranch = (id: string) => {
+    if (!id || id === "null") return branches.find(b => b.id === "null");
+    const targetId = String(id).toLowerCase();
+    return branches.find(b => String(b.id).toLowerCase() === targetId);
+  }
 
   // ─────────────────────────────── SELECTED ROLE SCOPE ────────────────────────
-  const selectedRole = roles.find(r => r.id === uForm.roleId)
+  const selectedRole = getRole(uForm.roleId)
   const isPalikaScope = selectedRole?.scope === "palika"
+
 
   // ─────────────────────────────── STATS ───────────────────────────────────────
   const displayedUsers = users.filter(u => {
@@ -688,10 +707,16 @@ function UsersManagementContent() {
 
                   <div className="grid gap-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-semibold text-gray-700">Assigned Role <span className="text-red-500">*</span></Label>
-                    <Select value={uForm.roleId} onValueChange={v => setUForm(f => ({ ...f, roleId: v || "" }))}>
+                    <Select 
+                      value={getRole(uForm.roleId)?.id ? String(getRole(uForm.roleId)?.id) : uForm.roleId} 
+                      onValueChange={v => setUForm(f => ({ ...f, roleId: v || "" }))}
+                    >
                       <SelectTrigger className={uErrors.roleId ? "border-red-400 h-10" : "h-10"}>
-                        <SelectValue placeholder="Select Role" />
+                        <SelectValue placeholder="Select Role">
+                          {getRole(uForm.roleId)?.name}
+                        </SelectValue>
                       </SelectTrigger>
+
                       <SelectContent>
                         {roles.map(r => (
                           <SelectItem key={r.id} value={String(r.id)}>
@@ -714,9 +739,14 @@ function UsersManagementContent() {
                   {!isPalikaScope && (
                     <div className="grid gap-1.5 col-span-2 sm:col-span-1">
                       <Label className="text-xs font-semibold text-gray-700">Office / Ward Branch <span className="text-red-500">*</span></Label>
-                      <Select value={uForm.branchId} onValueChange={v => setUForm(f => ({ ...f, branchId: v || "" }))}>
+                      <Select 
+                        value={getBranch(uForm.branchId)?.id ? String(getBranch(uForm.branchId)?.id) : uForm.branchId} 
+                        onValueChange={v => setUForm(f => ({ ...f, branchId: v || "null" }))}
+                      >
                         <SelectTrigger className={uErrors.branchId ? "border-red-400 h-10" : "h-10"}>
-                          <SelectValue placeholder="Select Office" />
+                          <SelectValue placeholder="Select Office">
+                            {getBranch(uForm.branchId)?.name || (uForm.branchId === "null" ? "केन्द्रीय कार्यालय" : undefined)}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {branches.map(b => (

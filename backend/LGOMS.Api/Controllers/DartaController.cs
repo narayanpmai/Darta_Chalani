@@ -44,4 +44,34 @@ public class DartaController : ControllerBase
         var result = await _mediator.Send(query);
         return Ok(result);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDartaCommand command)
+    {
+        command.Id = id;
+        try
+        {
+            await _mediator.Send(command);
+            return Ok(new { message = "दर्ता विवरण सफलतापूर्वक अपडेट भयो।" });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            await _mediator.Send(new DeleteDartaCommand { Id = id });
+            return Ok(new { message = "दर्ता विवरण सफलतापूर्वक हटाइयो।" });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }
+

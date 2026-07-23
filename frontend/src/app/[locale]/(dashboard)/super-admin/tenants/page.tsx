@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Link } from "@/i18n/routing"
 import { useAuth } from "@/lib/auth-context"
+import { fetchApi } from "@/lib/api"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,13 +34,8 @@ export default function TenantsDashboardPage() {
     setLoading(true)
     setError(null)
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
-      const res = await fetch(`${apiUrl}/tenants`)
-      if (!res.ok) {
-        throw new Error("Failed to load municipalities list")
-      }
-      const data = await res.json()
-      setTenants(data)
+      const data = await fetchApi('/Tenants')
+      setTenants(data || [])
     } catch (err: any) {
       setError(err.message || "Error fetching data")
       console.error(err)
@@ -97,23 +93,15 @@ export default function TenantsDashboardPage() {
     if (!editingTenant) return
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
       const domain = editForm.subdomain + ".lgoms.gov.np"
-      const res = await fetch(`${apiUrl}/tenants/${editingTenant.id}`, {
+      await fetchApi(`/Tenants/${editingTenant.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify({
           name: editForm.name,
           domain: domain,
           isActive: editForm.isActive
         })
       })
-
-      if (!res.ok) {
-        throw new Error("Failed to update municipality")
-      }
 
       setEditingTenant(null)
       fetchTenants()
@@ -124,12 +112,8 @@ export default function TenantsDashboardPage() {
 
   const handleToggleActive = async (t: any) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
-      const res = await fetch(`${apiUrl}/tenants/${t.id}`, {
+      await fetchApi(`/Tenants/${t.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify({
           name: t.name,
           domain: t.domain,
@@ -137,15 +121,12 @@ export default function TenantsDashboardPage() {
         })
       })
 
-      if (!res.ok) {
-        throw new Error("Failed to toggle status")
-      }
-
       fetchTenants()
     } catch (err: any) {
       alert(err.message || "Error toggling status")
     }
   }
+
 
   const filtered = tenants.filter(t => 
     t.name.toLowerCase().includes(search.toLowerCase()) || 

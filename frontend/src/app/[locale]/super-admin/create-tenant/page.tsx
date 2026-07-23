@@ -14,6 +14,7 @@ import {
   SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { Link } from "@/i18n/routing"
+import { fetchApi } from "@/lib/api"
 import provinces from "@/lib/nepal-data/provinces.json"
 import districts from "@/lib/nepal-data/districts.json"
 import localLevels from "@/lib/nepal-data/local_levels.json"
@@ -23,6 +24,7 @@ export default function CreateTenantWizard() {
   const [isDeploying, setIsDeploying] = useState(false)
   const [deploySuccess, setDeploySuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
 
   // Form State
   const [formData, setFormData] = useState({
@@ -137,16 +139,12 @@ export default function CreateTenantWizard() {
     const subdomainToDeploy = formData.subdomain || formData.nameEn.toLowerCase().replace(/[^a-z0-9]/g, '');
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-      const response = await fetch(`${apiUrl}/tenants`, {
+      await fetchApi('/Tenants', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           Name: formData.nameEn,
           Subdomain: subdomainToDeploy,
-          WardCount: parseInt(formData.wardCount),
+          WardCount: parseInt(formData.wardCount) || 9,
           AdminName: formData.adminName,
           AdminUsername: formData.adminUsername,
           AdminEmail: formData.adminEmail,
@@ -154,24 +152,8 @@ export default function CreateTenantWizard() {
         }),
       });
 
-      if (response.ok) {
-        setFormData(prev => ({ ...prev, subdomain: subdomainToDeploy }));
-        setDeploySuccess(true)
-      } else {
-        let errorMsg = 'Failed to create tenant';
-        try {
-          const errData = await response.json();
-          if (errData && errData.message) {
-            errorMsg = errData.message;
-          } else if (errData && errData.title) {
-            errorMsg = errData.title;
-          }
-        } catch (e) {
-          // ignore
-        }
-        setError(errorMsg)
-        console.error('Failed to create tenant:', errorMsg)
-      }
+      setFormData(prev => ({ ...prev, subdomain: subdomainToDeploy }));
+      setDeploySuccess(true)
     } catch (err: any) {
       setError(err.message || 'Error deploying tenant')
       console.error('Error deploying tenant:', err)
@@ -179,6 +161,7 @@ export default function CreateTenantWizard() {
       setIsDeploying(false)
     }
   }
+
 
   const STEPS = [
     { id: 1, title: "Municipality Details", icon: Building2, desc: "Basic office profile" },
