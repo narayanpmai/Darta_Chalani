@@ -1,5 +1,6 @@
 using LGOMS.Application.Features.Tenants.Commands;
 using LGOMS.Application.Features.Tenants.Queries;
+using LGOMS.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,10 +13,12 @@ namespace LGOMS.Api.Controllers;
 public class TenantsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ApplicationDbContext _context;
 
-    public TenantsController(IMediator mediator)
+    public TenantsController(IMediator mediator, ApplicationDbContext context)
     {
         _mediator = mediator;
+        _context = context;
     }
 
     [HttpPost]
@@ -39,4 +42,13 @@ public class TenantsController : ControllerBase
         await _mediator.Send(command);
         return Ok();
     }
+
+    /// <summary>POST /api/tenants/purge-non-master — Master Municipality बाहेक अरू सबै सिर्जित Municipalities हटाउनुहोस्</summary>
+    [HttpPost("purge-non-master")]
+    public async Task<IActionResult> PurgeNonMasterTenants()
+    {
+        await DbSeeder.SeedAsync(_context);
+        return Ok(new { message = "Master Municipality बाहेक अरू सबै सिर्जित Municipalities सफलतापुर्वक हटाइयो।" });
+    }
 }
+

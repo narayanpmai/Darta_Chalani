@@ -77,11 +77,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Run database migrations on startup
+// Run database migrations and seed SuperAdmin (purging non-SuperAdmin users) on startup
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<LGOMS.Infrastructure.Persistence.ApplicationDbContext>();
     dbContext.Database.Migrate();
+    await LGOMS.Infrastructure.Persistence.DbSeeder.SeedAsync(dbContext);
 }
 
 app.Run();

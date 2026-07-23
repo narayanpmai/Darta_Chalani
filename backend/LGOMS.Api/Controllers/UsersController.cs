@@ -1,5 +1,6 @@
 using LGOMS.Application.Features.Users.Commands;
 using LGOMS.Application.Features.Users.Queries;
+using LGOMS.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +17,12 @@ namespace LGOMS.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ApplicationDbContext _context;
 
-    public UsersController(IMediator mediator)
+    public UsersController(IMediator mediator, ApplicationDbContext context)
     {
         _mediator = mediator;
+        _context = context;
     }
 
     /// <summary>GET /api/users — सबै users को सूची</summary>
@@ -94,4 +97,13 @@ public class UsersController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
+
+    /// <summary>POST /api/users/purge-non-superadmins — SuperAdmin बाहेक अरू सबै users Database बाटै हटाउनुहोस्</summary>
+    [HttpPost("purge-non-superadmins")]
+    public async Task<IActionResult> PurgeNonSuperAdmins()
+    {
+        await DbSeeder.SeedAsync(_context);
+        return Ok(new { message = "SuperAdmin बाहेक अरू सबै Users सफलतापुर्वक Database बाट हटाइयो।" });
+    }
 }
+
