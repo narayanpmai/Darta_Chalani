@@ -73,7 +73,7 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
         var entity = new LGOMS.Domain.Entities.Chalani
         {
             ChalaniNumber = generatedNumber,
-            DispatchDate = request.DispatchDate == default ? DateTime.UtcNow : request.DispatchDate,
+            DispatchDate = request.DispatchDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(request.DispatchDate, DateTimeKind.Utc),
             Miti = request.Miti,
             LetterNumber = request.LetterNumber,
             ReceiverName = request.ReceiverName,

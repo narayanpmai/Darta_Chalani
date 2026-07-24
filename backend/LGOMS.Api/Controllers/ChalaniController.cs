@@ -21,8 +21,20 @@ public class ChalaniController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateChalaniCommand command)
     {
-        var result = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetById), new { id = result }, result);
+        try
+        {
+            var result = await _mediator.Send(command);
+            return Ok(new { id = result });
+        }
+        catch (Exception ex)
+        {
+            var current = ex;
+            while (current.InnerException != null)
+            {
+                current = current.InnerException;
+            }
+            return StatusCode(500, new { message = current.Message });
+        }
     }
 
     [HttpGet("{id}")]

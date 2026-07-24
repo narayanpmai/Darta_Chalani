@@ -54,7 +54,7 @@ public class UpdateChalaniCommandHandler : IRequestHandler<UpdateChalaniCommand>
             entity.Miti = request.Miti;
 
         if (request.DispatchDate != default)
-            entity.DispatchDate = request.DispatchDate;
+            entity.DispatchDate = DateTime.SpecifyKind(request.DispatchDate, DateTimeKind.Utc);
 
         entity.LetterNumber = request.LetterNumber ?? entity.LetterNumber;
         entity.ReceiverName = request.ReceiverName ?? entity.ReceiverName;

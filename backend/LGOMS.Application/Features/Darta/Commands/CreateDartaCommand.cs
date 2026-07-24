@@ -69,7 +69,7 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
         var entity = new LGOMS.Domain.Entities.Darta
         {
             DartaNumber = generatedNumber,
-            RegistrationDate = request.RegistrationDate == default ? DateTime.UtcNow : request.RegistrationDate,
+            RegistrationDate = request.RegistrationDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(request.RegistrationDate, DateTimeKind.Utc),
             Miti = request.Miti,
             ReceivedLetterDate = request.ReceivedLetterDate,
             ReceivedLetterNumber = request.ReceivedLetterNumber,

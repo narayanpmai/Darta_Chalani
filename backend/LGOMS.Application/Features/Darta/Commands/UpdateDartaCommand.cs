@@ -54,7 +54,7 @@ public class UpdateDartaCommandHandler : IRequestHandler<UpdateDartaCommand>
             entity.Miti = request.Miti;
 
         if (request.RegistrationDate != default)
-            entity.RegistrationDate = request.RegistrationDate;
+            entity.RegistrationDate = DateTime.SpecifyKind(request.RegistrationDate, DateTimeKind.Utc);
 
         entity.ReceivedLetterDate = request.ReceivedLetterDate ?? entity.ReceivedLetterDate;
         entity.ReceivedLetterNumber = request.ReceivedLetterNumber ?? entity.ReceivedLetterNumber;
