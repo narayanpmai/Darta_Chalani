@@ -10,6 +10,10 @@ public static class DbSeeder
 {
     public static readonly Guid MasterTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
+    /// <summary>
+    /// Safe seed method called on application startup.
+    /// Ensures Master Tenant and SuperAdmin user exist WITHOUT deleting any existing data.
+    /// </summary>
     public static async Task SeedAsync(ApplicationDbContext context)
     {
         // ── 1. ENSURE MASTER TENANT (MUNICIPALITY) ──────────────────────────────────
@@ -55,16 +59,31 @@ public static class DbSeeder
         }
         else
         {
-            superAdmin.Role = "SuperAdmin";
-            superAdmin.TenantId = MasterTenantId;
-            superAdmin.IsActive = true;
-            await context.SaveChangesAsync();
+            if (superAdmin.TenantId != MasterTenantId || superAdmin.Role != "SuperAdmin" || !superAdmin.IsActive)
+            {
+                superAdmin.Role = "SuperAdmin";
+                superAdmin.TenantId = MasterTenantId;
+                superAdmin.IsActive = true;
+                await context.SaveChangesAsync();
+            }
         }
+    }
 
-        // ── 3. PURGE NON-SUPERADMIN USERS FIRST (TO PREVENT FK CONSTRAINTS) ─────────
+    /// <summary>
+    /// Optional manual purge method — ONLY called when explicitly requested via API for resetting dev test data.
+    /// </summary>
+    public static async Task PurgeNonMasterTenantsAsync(ApplicationDbContext context)
+    {
+        await SeedAsync(context);
+
+        var superAdmin = await context.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Role == "SuperAdmin" || u.Username == "superadmin");
+
+        // ── 1. PURGE NON-SUPERADMIN USERS FIRST (TO PREVENT FK CONSTRAINTS) ─────────
         var nonSuperAdminUsers = await context.Users
             .IgnoreQueryFilters()
-            .Where(u => u.Role != "SuperAdmin" && u.Username != "superadmin" && u.Id != superAdmin.Id)
+            .Where(u => u.Role != "SuperAdmin" && u.Username != "superadmin" && (superAdmin == null || u.Id != superAdmin.Id))
             .ToListAsync();
 
         if (nonSuperAdminUsers.Count > 0)
@@ -73,14 +92,13 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        // Also nullify any WardId on remaining superAdmin to prevent ward FK issues
-        if (superAdmin.WardId.HasValue)
+        if (superAdmin != null && superAdmin.WardId.HasValue)
         {
             superAdmin.WardId = null;
             await context.SaveChangesAsync();
         }
 
-        // ── 4. PURGE OTHER TENANTS & RELATED ENTITIES ────────────────────────────────
+        // ── 2. PURGE OTHER TENANTS & RELATED ENTITIES ────────────────────────────────
         var otherTenants = await context.Tenants
             .IgnoreQueryFilters()
             .Where(t => t.Id != MasterTenantId)

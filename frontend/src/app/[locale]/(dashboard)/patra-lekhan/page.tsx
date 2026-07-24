@@ -48,6 +48,10 @@ export default function PatraLekhanPage() {
       } catch {}
     }
 
+    const nepaliDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+    const toNepaliNumeral = (num: number | string) => 
+      num.toString().replace(/\d/g, (digit) => nepaliDigits[parseInt(digit, 10)]);
+
     // Determine default local count
     let localCount = 0
     const cached = typeof window !== 'undefined' ? localStorage.getItem("lgoms_chalanis") : null
@@ -58,8 +62,7 @@ export default function PatraLekhanPage() {
       } catch {}
     }
 
-    const prefix = ward && ward !== "0" ? `W${ward}` : "P"
-    const defaultNo = `${activeFyName}-${prefix}-C-${localCount + 1}`
+    const defaultNo = toNepaliNumeral(localCount + 1)
     
     setFormData(prev => ({ 
       ...prev, 
@@ -72,7 +75,7 @@ export default function PatraLekhanPage() {
     fetchApi('/Chalani')
       .then(data => {
         if (Array.isArray(data)) {
-          const nextNo = `${activeFyName}-${prefix}-C-${data.length + 1}`
+          const nextNo = toNepaliNumeral(data.length + 1)
           setFormData(prev => ({ ...prev, chalaniNo: nextNo }))
         }
       })

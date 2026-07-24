@@ -63,7 +63,7 @@ public class TenantsController : ControllerBase
     [HttpPost("purge-non-master")]
     public async Task<IActionResult> PurgeNonMasterTenants()
     {
-        await DbSeeder.SeedAsync(_context);
+        await DbSeeder.PurgeNonMasterTenantsAsync(_context);
         return Ok(new { message = "Master Municipality बाहेक अरू सबै सिर्जित Municipalities सफलतापुर्वक हटाइयो।" });
     }
 }

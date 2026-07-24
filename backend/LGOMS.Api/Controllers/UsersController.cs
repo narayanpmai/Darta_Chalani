@@ -102,7 +102,7 @@ public class UsersController : ControllerBase
     [HttpPost("purge-non-superadmins")]
     public async Task<IActionResult> PurgeNonSuperAdmins()
     {
-        await DbSeeder.SeedAsync(_context);
+        await DbSeeder.PurgeNonMasterTenantsAsync(_context);
         return Ok(new { message = "SuperAdmin बाहेक अरू सबै Users सफलतापुर्वक Database बाट हटाइयो।" });
     }
 }
