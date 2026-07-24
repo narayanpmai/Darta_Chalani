@@ -42,6 +42,25 @@ public class SequenceGeneratorService : ISequenceGeneratorService
         
         await _context.SaveChangesAsync();
 
-        return tracker.CurrentSequence.ToString();
+        return ToNepaliNumeral(tracker.CurrentSequence);
+    }
+
+    private static string ToNepaliNumeral(int number)
+    {
+        string numStr = number.ToString();
+        char[] nepaliDigits = new char[] { '०', '१', '२', '३', '४', '५', '६', '७', '८', '९' };
+        char[] result = new char[numStr.Length];
+        for (int i = 0; i < numStr.Length; i++)
+        {
+            if (char.IsDigit(numStr[i]))
+            {
+                result[i] = nepaliDigits[numStr[i] - '0'];
+            }
+            else
+            {
+                result[i] = numStr[i];
+            }
+        }
+        return new string(result);
     }
 }

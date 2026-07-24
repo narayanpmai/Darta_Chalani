@@ -32,10 +32,14 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { message = "Username र Password आवश्यक छ।" });
 
-        // Find user — ignores tenant filter for login
+        var inputUsername = request.Username.Trim().ToLower();
+
+        // Find user — supports login by Username or Email (case-insensitive), ignoring tenant filter
         var user = await _context.Users
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(u => u.Username == request.Username && u.IsActive);
+            .FirstOrDefaultAsync(u => 
+                (u.Username.ToLower() == inputUsername || u.Email.ToLower() == inputUsername) 
+                && u.IsActive);
 
         if (user == null)
             return Unauthorized(new { message = "Invalid username or password" });

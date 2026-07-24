@@ -55,6 +55,10 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, G
         }
 
         var adminUsername = (request.AdminUsername ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(adminUsername) && !string.IsNullOrWhiteSpace(request.AdminEmail))
+        {
+            adminUsername = request.AdminEmail.Split('@')[0].Trim();
+        }
         if (string.IsNullOrWhiteSpace(adminUsername))
         {
             throw new InvalidOperationException("Admin Username आवश्यक छ।");

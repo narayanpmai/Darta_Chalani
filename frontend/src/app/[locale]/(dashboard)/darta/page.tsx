@@ -73,13 +73,13 @@ export default function DartaPage() {
   }, [])
 
   useEffect(() => {
-    if (activeFy && viewMode === "form" && !editId) {
-      const prefix = user?.ward && user.ward !== "0" 
-        ? `W${user.ward}` 
-        : "P";
-      setDartaNo(`${activeFy}-${prefix}-D-${dartaList.length + 1}`)
+    if (viewMode === "form" && !editId) {
+      const nepaliDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+      const numStr = (dartaList.length + 1).toString();
+      const nepaliNum = numStr.replace(/\d/g, (digit) => nepaliDigits[parseInt(digit, 10)]);
+      setDartaNo(nepaliNum)
     }
-  }, [activeFy, user, viewMode, dartaList, editId])
+  }, [viewMode, dartaList, editId])
 
   // Cache logic removed - we rely purely on backend state
 

@@ -107,13 +107,13 @@ export default function ChalaniPage() {
   }, [])
 
   useEffect(() => {
-    if (activeFy && viewMode === "form" && !editId) {
-      const prefix = user?.ward && user.ward !== "0" 
-        ? `W${user.ward}` 
-        : "P";
-      setChalaniNo(`${activeFy}-${prefix}-C-${chalaniList.length + 1}`)
+    if (viewMode === "form" && !editId) {
+      const nepaliDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+      const numStr = (chalaniList.length + 1).toString();
+      const nepaliNum = numStr.replace(/\d/g, (digit) => nepaliDigits[parseInt(digit, 10)]);
+      setChalaniNo(nepaliNum)
     }
-  }, [activeFy, user, viewMode, chalaniList, editId])
+  }, [viewMode, chalaniList, editId])
 
   // Cache logic removed - we rely purely on backend state
 
