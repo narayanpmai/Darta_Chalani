@@ -32,25 +32,41 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, G
 
     public async Task<Guid> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
-        var domain = (request.Subdomain ?? string.Empty).Trim().ToLower() + ".lgoms.gov.np";
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new InvalidOperationException("Municipality को नाम (Name) आवश्यक छ।");
+        }
 
-        // Check if tenant domain or admin username already exists
+        var subdomainRaw = (request.Subdomain ?? string.Empty).Trim().ToLower();
+        if (string.IsNullOrWhiteSpace(subdomainRaw))
+        {
+            subdomainRaw = request.Name.ToLower().Replace(" ", "");
+        }
+        var domain = subdomainRaw + ".lgoms.gov.np";
+
+        // Check if tenant domain or name already exists
         var tenantExists = await _context.Tenants
             .IgnoreQueryFilters()
             .AnyAsync(t => t.Domain.ToLower() == domain.ToLower() || t.Name.ToLower() == request.Name.ToLower(), cancellationToken);
 
         if (tenantExists)
         {
-            throw new InvalidOperationException("यो Municipality / Subdomain पहिले नै दर्ता भइसकेको छ।");
+            throw new InvalidOperationException($"Municipality '{request.Name}' वा Subdomain '{subdomainRaw}' पहिले नै दर्ता भइसकेको छ।");
+        }
+
+        var adminUsername = (request.AdminUsername ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(adminUsername))
+        {
+            throw new InvalidOperationException("Admin Username आवश्यक छ।");
         }
 
         var userExists = await _context.Users
             .IgnoreQueryFilters()
-            .AnyAsync(u => u.Username.ToLower() == request.AdminUsername.ToLower(), cancellationToken);
+            .AnyAsync(u => u.Username.ToLower() == adminUsername.ToLower(), cancellationToken);
 
         if (userExists)
         {
-            throw new InvalidOperationException("यो Admin Username पहिले नै प्रयोग भइसकेको छ।");
+            throw new InvalidOperationException($"Admin Username '{adminUsername}' पहिले नै प्रयोग भइसकेको छ।");
         }
 
         // 1. Create Tenant
@@ -84,8 +100,8 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, G
             Id = Guid.NewGuid(),
             TenantId = tenant.Id,
             Name = "२०८२/०८३",
-            StartDate = new DateTime(2025, 7, 16),
-            EndDate = new DateTime(2026, 7, 15),
+            StartDate = DateTime.SpecifyKind(new DateTime(2025, 7, 16), DateTimeKind.Utc),
+            EndDate = DateTime.SpecifyKind(new DateTime(2026, 7, 15), DateTimeKind.Utc),
             IsActive = true
         };
         _context.FiscalYears.Add(defaultFiscalYear);
@@ -116,9 +132,10 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, G
             Id = Guid.NewGuid(),
             TenantId = tenant.Id,
             WardId = null, // Palika level
-            FullName = request.AdminName,
-            Username = request.AdminUsername,
+            FullName = string.IsNullOrWhiteSpace(request.AdminName) ? "Municipality Admin" : request.AdminName,
+            Username = adminUsername,
             Email = request.AdminEmail ?? string.Empty,
+            EmployeeCode = $"EMP-ADM-{Random.Shared.Next(100, 999)}",
             Role = "MunicipalityAdmin",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
             IsActive = true

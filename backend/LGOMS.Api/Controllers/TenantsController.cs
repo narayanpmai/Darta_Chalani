@@ -24,8 +24,24 @@ public class TenantsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreateTenantCommand command)
     {
-        var tenantId = await _mediator.Send(command);
-        return Ok(new { TenantId = tenantId });
+        try
+        {
+            var tenantId = await _mediator.Send(command);
+            return Ok(new { TenantId = tenantId });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            var current = ex;
+            while (current.InnerException != null)
+            {
+                current = current.InnerException;
+            }
+            return StatusCode(500, new { message = current.Message });
+        }
     }
 
     [HttpGet]

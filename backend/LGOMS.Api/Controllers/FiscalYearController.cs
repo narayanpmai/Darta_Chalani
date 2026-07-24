@@ -34,8 +34,8 @@ namespace LGOMS.Api.Controllers
                     Id = Guid.NewGuid(),
                     TenantId = tenantId,
                     Name = "२०८१/०८२",
-                    StartDate = new DateTime(2024, 7, 16),
-                    EndDate = new DateTime(2025, 7, 15),
+                    StartDate = DateTime.SpecifyKind(new DateTime(2024, 7, 16), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(2025, 7, 15), DateTimeKind.Utc),
                     IsActive = true
                 };
                 var fy2 = new FiscalYear
@@ -43,8 +43,8 @@ namespace LGOMS.Api.Controllers
                     Id = Guid.NewGuid(),
                     TenantId = tenantId,
                     Name = "२०८२/०८३",
-                    StartDate = new DateTime(2025, 7, 16),
-                    EndDate = new DateTime(2026, 7, 15),
+                    StartDate = DateTime.SpecifyKind(new DateTime(2025, 7, 16), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(2026, 7, 15), DateTimeKind.Utc),
                     IsActive = false
                 };
 
