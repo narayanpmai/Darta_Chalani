@@ -38,7 +38,8 @@ export default function DartaPage() {
     remarks: "",
     receiverEmail: "",
     receivingBranch: "",
-    status: "दर्ता भएको"
+    status: "दर्ता भएको",
+    relatedFile: ""
   })
 
   // Cache/List Data
@@ -146,7 +147,7 @@ export default function DartaPage() {
       const data = await fetchApi(`/Darta/${item.id}`);
       setFormData({
         subject: data.subject || baseObj.subject || "",
-        letterType: data.letterType || baseObj.letterType || "general",
+        letterType: data.letterType || baseObj.letterType || "साधारण पत्र",
         letterDate: data.receivedLetterDate || baseObj.letterDate || "",
         senderName: data.senderName || baseObj.senderName || "",
         senderAddress: data.senderAddress || baseObj.senderAddress || "",
@@ -154,7 +155,8 @@ export default function DartaPage() {
         remarks: data.remarks || baseObj.remarks || "",
         receiverEmail: data.receiverEmail || baseObj.receiverEmail || "",
         receivingBranch: data.forwardedToDepartment || baseObj.receivingBranch || "",
-        status: data.status || baseObj.status || "दर्ता भएको"
+        status: data.status || baseObj.status || "दर्ता भएको",
+        relatedFile: data.attachmentUrl || baseObj.relatedFile || ""
       });
       setMiti(data.miti || baseObj.miti || miti);
       setDartaNo(data.dartaNumber || baseObj.dartaNo);
@@ -164,7 +166,7 @@ export default function DartaPage() {
       console.warn("Failed to fetch full Darta item, using local state", err);
       setFormData({
         subject: baseObj.subject || "",
-        letterType: baseObj.letterType || "general",
+        letterType: baseObj.letterType || "साधारण पत्र",
         letterDate: baseObj.letterDate || "",
         senderName: baseObj.senderName || baseObj.sender || "",
         senderAddress: baseObj.senderAddress || "",
@@ -172,7 +174,8 @@ export default function DartaPage() {
         remarks: baseObj.remarks || "",
         receiverEmail: baseObj.receiverEmail || "",
         receivingBranch: baseObj.receivingBranch || "",
-        status: baseObj.status || "दर्ता भएको"
+        status: baseObj.status || "दर्ता भएको",
+        relatedFile: baseObj.relatedFile || ""
       });
       setMiti(baseObj.miti || miti);
       setDartaNo(baseObj.dartaNo);
@@ -226,20 +229,20 @@ export default function DartaPage() {
     setIsSubmitting(true)
     
     try {
-      // Build the command object
       const command = {
-        RegistrationDate: new Date().toISOString(),
+        RegistrationDate: editId ? undefined : new Date().toISOString(),
         Miti: miti,
         SenderName: formData.senderName,
         SenderAddress: formData.senderAddress,
         Subject: formData.subject,
-        LetterType: formData.letterType || "General",
+        LetterType: formData.letterType || "साधारण पत्र",
         ReceivedLetterDate: formData.letterDate,
         ReceivedLetterNumber: formData.senderDispatchNo,
-        ForwardedToDepartment: formData.receivingBranch,
+        ForwardedToDepartment: formData.receivingBranch || "प्रशासन शाखा",
         Priority: "Normal",
         Status: formData.status,
-        Remarks: formData.remarks
+        Remarks: formData.remarks,
+        AttachmentUrl: formData.relatedFile
       };
 
       let resultId: string = "";
@@ -287,7 +290,7 @@ export default function DartaPage() {
       setEditId(null)
       // Reset form
       setFormData({
-        subject: "", letterType: "", letterDate: "", senderName: "", senderAddress: "", senderDispatchNo: "", remarks: "", receiverEmail: "", receivingBranch: "", status: "दर्ता भएको"
+        subject: "", letterType: "", letterDate: "", senderName: "", senderAddress: "", senderDispatchNo: "", remarks: "", receiverEmail: "", receivingBranch: "", status: "दर्ता भएको", relatedFile: ""
       })
       setFileStatus("idle")
     } catch (error: any) {
@@ -310,7 +313,7 @@ export default function DartaPage() {
         </div>
         <div>
           {viewMode === "list" ? (
-            <Button onClick={() => { setEditId(null); setFormData({ subject: "", letterType: "", letterDate: "", senderName: "", senderAddress: "", senderDispatchNo: "", remarks: "", receiverEmail: "", receivingBranch: "", status: "दर्ता भएको" }); setViewMode("form"); }} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex gap-2">
+            <Button onClick={() => { setEditId(null); setFormData({ subject: "", letterType: "", letterDate: "", senderName: "", senderAddress: "", senderDispatchNo: "", remarks: "", receiverEmail: "", receivingBranch: "", status: "दर्ता भएको", relatedFile: "" }); setViewMode("form"); }} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex gap-2">
               <Plus className="h-4 w-4" /> नयाँ दर्ता
             </Button>
           ) : (

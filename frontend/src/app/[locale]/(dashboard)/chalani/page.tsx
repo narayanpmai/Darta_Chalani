@@ -249,15 +249,20 @@ export default function ChalaniPage() {
 
     try {
       const command = {
-        DispatchDate: new Date().toISOString(),
+        DispatchDate: editId ? undefined : new Date().toISOString(),
         Miti: miti,
         ReceiverName: formData.recipientName,
         ReceiverAddress: formData.recipientAddress,
         Subject: formData.subject,
+        LetterNumber: formData.letterDate,
         OriginatingDepartment: formData.relatedFile || "प्रशासन शाखा",
+        DeliveryMethod: formData.letterType || "Physical",
+        PeonBookNumber: formData.recipientEmail,
+        ReferenceDartaNumber: formData.cc,
+        OrderOrDecision: formData.tokAdeshPerson,
         Status: formData.approvalStatus,
-        TokAdeshPerson: formData.tokAdeshPerson,
-        Remarks: formData.remarks
+        Remarks: formData.remarks,
+        AttachmentUrl: formData.relatedFile
       };
 
       let resultId: string = "";

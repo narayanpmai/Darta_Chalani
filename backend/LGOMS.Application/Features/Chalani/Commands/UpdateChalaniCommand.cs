@@ -11,19 +11,19 @@ public class UpdateChalaniCommand : IRequest
 {
     public Guid Id { get; set; }
     public string? ChalaniNumber { get; set; }
-    public string Miti { get; set; } = string.Empty;
-    public DateTime DispatchDate { get; set; }
+    public string? Miti { get; set; }
+    public DateTime? DispatchDate { get; set; }
     public string? LetterNumber { get; set; }
-    public string ReceiverName { get; set; } = string.Empty;
-    public string ReceiverAddress { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string OriginatingDepartment { get; set; } = string.Empty;
-    public string DeliveryMethod { get; set; } = "Physical";
+    public string? ReceiverName { get; set; }
+    public string? ReceiverAddress { get; set; }
+    public string? Subject { get; set; }
+    public string? OriginatingDepartment { get; set; }
+    public string? DeliveryMethod { get; set; }
     public string? PeonBookNumber { get; set; }
     public string? DispatchTime { get; set; }
     public string? ReferenceDartaNumber { get; set; }
     public string? OrderOrDecision { get; set; }
-    public string Status { get; set; } = "Dispatched";
+    public string? Status { get; set; }
     public string? Remarks { get; set; }
     public string? AttachmentUrl { get; set; }
 }
@@ -53,22 +53,47 @@ public class UpdateChalaniCommandHandler : IRequestHandler<UpdateChalaniCommand>
         if (!string.IsNullOrWhiteSpace(request.Miti))
             entity.Miti = request.Miti;
 
-        if (request.DispatchDate != default)
-            entity.DispatchDate = DateTime.SpecifyKind(request.DispatchDate, DateTimeKind.Utc);
+        if (request.DispatchDate.HasValue && request.DispatchDate.Value != default)
+            entity.DispatchDate = DateTime.SpecifyKind(request.DispatchDate.Value, DateTimeKind.Utc);
 
-        entity.LetterNumber = request.LetterNumber ?? entity.LetterNumber;
-        entity.ReceiverName = request.ReceiverName ?? entity.ReceiverName;
-        entity.ReceiverAddress = request.ReceiverAddress ?? entity.ReceiverAddress;
-        entity.Subject = request.Subject ?? entity.Subject;
-        entity.OriginatingDepartment = request.OriginatingDepartment ?? entity.OriginatingDepartment;
-        entity.DeliveryMethod = request.DeliveryMethod ?? entity.DeliveryMethod;
-        entity.PeonBookNumber = request.PeonBookNumber ?? entity.PeonBookNumber;
-        entity.DispatchTime = request.DispatchTime ?? entity.DispatchTime;
-        entity.ReferenceDartaNumber = request.ReferenceDartaNumber ?? entity.ReferenceDartaNumber;
-        entity.OrderOrDecision = request.OrderOrDecision ?? entity.OrderOrDecision;
-        entity.Status = request.Status ?? entity.Status;
-        entity.Remarks = request.Remarks ?? entity.Remarks;
-        entity.AttachmentUrl = request.AttachmentUrl ?? entity.AttachmentUrl;
+        if (!string.IsNullOrWhiteSpace(request.LetterNumber))
+            entity.LetterNumber = request.LetterNumber;
+
+        if (!string.IsNullOrWhiteSpace(request.ReceiverName))
+            entity.ReceiverName = request.ReceiverName;
+
+        if (!string.IsNullOrWhiteSpace(request.ReceiverAddress))
+            entity.ReceiverAddress = request.ReceiverAddress;
+
+        if (!string.IsNullOrWhiteSpace(request.Subject))
+            entity.Subject = request.Subject;
+
+        if (!string.IsNullOrWhiteSpace(request.OriginatingDepartment))
+            entity.OriginatingDepartment = request.OriginatingDepartment;
+
+        if (!string.IsNullOrWhiteSpace(request.DeliveryMethod))
+            entity.DeliveryMethod = request.DeliveryMethod;
+
+        if (!string.IsNullOrWhiteSpace(request.PeonBookNumber))
+            entity.PeonBookNumber = request.PeonBookNumber;
+
+        if (!string.IsNullOrWhiteSpace(request.DispatchTime))
+            entity.DispatchTime = request.DispatchTime;
+
+        if (!string.IsNullOrWhiteSpace(request.ReferenceDartaNumber))
+            entity.ReferenceDartaNumber = request.ReferenceDartaNumber;
+
+        if (!string.IsNullOrWhiteSpace(request.OrderOrDecision))
+            entity.OrderOrDecision = request.OrderOrDecision;
+
+        if (!string.IsNullOrWhiteSpace(request.Status))
+            entity.Status = request.Status;
+
+        if (request.Remarks != null)
+            entity.Remarks = request.Remarks;
+
+        if (!string.IsNullOrWhiteSpace(request.AttachmentUrl))
+            entity.AttachmentUrl = request.AttachmentUrl;
 
         await _context.SaveChangesAsync(cancellationToken);
     }

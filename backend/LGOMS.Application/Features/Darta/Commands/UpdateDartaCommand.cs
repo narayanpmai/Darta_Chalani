@@ -11,18 +11,18 @@ public class UpdateDartaCommand : IRequest
 {
     public Guid Id { get; set; }
     public string? DartaNumber { get; set; }
-    public string Miti { get; set; } = string.Empty;
-    public DateTime RegistrationDate { get; set; }
+    public string? Miti { get; set; }
+    public DateTime? RegistrationDate { get; set; }
     public string? ReceivedLetterDate { get; set; }
     public string? ReceivedLetterNumber { get; set; }
-    public string SenderName { get; set; } = string.Empty;
-    public string SenderAddress { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string LetterType { get; set; } = "General";
+    public string? SenderName { get; set; }
+    public string? SenderAddress { get; set; }
+    public string? Subject { get; set; }
+    public string? LetterType { get; set; }
     public string? ForwardedToDepartment { get; set; }
     public string? HandledBy { get; set; }
-    public string Priority { get; set; } = "Normal";
-    public string Status { get; set; } = "Pending";
+    public string? Priority { get; set; }
+    public string? Status { get; set; }
     public string? Remarks { get; set; }
     public string? AttachmentUrl { get; set; }
     public string? EntryTime { get; set; }
@@ -53,22 +53,47 @@ public class UpdateDartaCommandHandler : IRequestHandler<UpdateDartaCommand>
         if (!string.IsNullOrWhiteSpace(request.Miti))
             entity.Miti = request.Miti;
 
-        if (request.RegistrationDate != default)
-            entity.RegistrationDate = DateTime.SpecifyKind(request.RegistrationDate, DateTimeKind.Utc);
+        if (request.RegistrationDate.HasValue && request.RegistrationDate.Value != default)
+            entity.RegistrationDate = DateTime.SpecifyKind(request.RegistrationDate.Value, DateTimeKind.Utc);
 
-        entity.ReceivedLetterDate = request.ReceivedLetterDate ?? entity.ReceivedLetterDate;
-        entity.ReceivedLetterNumber = request.ReceivedLetterNumber ?? entity.ReceivedLetterNumber;
-        entity.SenderName = request.SenderName ?? entity.SenderName;
-        entity.SenderAddress = request.SenderAddress ?? entity.SenderAddress;
-        entity.Subject = request.Subject ?? entity.Subject;
-        entity.LetterType = request.LetterType ?? entity.LetterType;
-        entity.ForwardedToDepartment = request.ForwardedToDepartment ?? entity.ForwardedToDepartment;
-        entity.HandledBy = request.HandledBy ?? entity.HandledBy;
-        entity.Priority = request.Priority ?? entity.Priority;
-        entity.Status = request.Status ?? entity.Status;
-        entity.Remarks = request.Remarks ?? entity.Remarks;
-        entity.AttachmentUrl = request.AttachmentUrl ?? entity.AttachmentUrl;
-        entity.EntryTime = request.EntryTime ?? entity.EntryTime;
+        if (!string.IsNullOrWhiteSpace(request.ReceivedLetterDate))
+            entity.ReceivedLetterDate = request.ReceivedLetterDate;
+
+        if (!string.IsNullOrWhiteSpace(request.ReceivedLetterNumber))
+            entity.ReceivedLetterNumber = request.ReceivedLetterNumber;
+
+        if (!string.IsNullOrWhiteSpace(request.SenderName))
+            entity.SenderName = request.SenderName;
+
+        if (!string.IsNullOrWhiteSpace(request.SenderAddress))
+            entity.SenderAddress = request.SenderAddress;
+
+        if (!string.IsNullOrWhiteSpace(request.Subject))
+            entity.Subject = request.Subject;
+
+        if (!string.IsNullOrWhiteSpace(request.LetterType))
+            entity.LetterType = request.LetterType;
+
+        if (!string.IsNullOrWhiteSpace(request.ForwardedToDepartment))
+            entity.ForwardedToDepartment = request.ForwardedToDepartment;
+
+        if (!string.IsNullOrWhiteSpace(request.HandledBy))
+            entity.HandledBy = request.HandledBy;
+
+        if (!string.IsNullOrWhiteSpace(request.Priority))
+            entity.Priority = request.Priority;
+
+        if (!string.IsNullOrWhiteSpace(request.Status))
+            entity.Status = request.Status;
+
+        if (request.Remarks != null)
+            entity.Remarks = request.Remarks;
+
+        if (!string.IsNullOrWhiteSpace(request.AttachmentUrl))
+            entity.AttachmentUrl = request.AttachmentUrl;
+
+        if (!string.IsNullOrWhiteSpace(request.EntryTime))
+            entity.EntryTime = request.EntryTime;
 
         await _context.SaveChangesAsync(cancellationToken);
     }
