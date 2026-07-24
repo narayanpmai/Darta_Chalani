@@ -43,32 +43,37 @@ public class CreateDartaCommandHandler : IRequestHandler<CreateDartaCommand, Gui
     private readonly IApplicationDbContext _context;
     private readonly ISequenceGeneratorService _sequenceGenerator;
     private readonly ITenantService _tenantService;
+    private readonly IWardService _wardService;
     private readonly IFiscalYearService _fiscalYearService;
 
     public CreateDartaCommandHandler(
         IApplicationDbContext context,
         ISequenceGeneratorService sequenceGenerator,
         ITenantService tenantService,
+        IWardService wardService,
         IFiscalYearService fiscalYearService)
     {
         _context = context;
         _sequenceGenerator = sequenceGenerator;
         _tenantService = tenantService;
+        _wardService = wardService;
         _fiscalYearService = fiscalYearService;
     }
 
     public async Task<Guid> Handle(CreateDartaCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantService.GetTenantId();
+        var wardId = _wardService.GetWardId();
         var fiscalYearId = _fiscalYearService.GetFiscalYearId();
 
         string generatedNumber = string.IsNullOrWhiteSpace(request.DartaNumber)
-            ? await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, null, fiscalYearId, "Darta")
+            ? await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, wardId, fiscalYearId, "Darta")
             : request.DartaNumber;
 
         var entity = new LGOMS.Domain.Entities.Darta
         {
             DartaNumber = generatedNumber,
+            WardId = wardId,
             RegistrationDate = request.RegistrationDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(request.RegistrationDate, DateTimeKind.Utc),
             Miti = request.Miti,
             ReceivedLetterDate = request.ReceivedLetterDate,

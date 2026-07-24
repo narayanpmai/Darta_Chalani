@@ -128,16 +128,19 @@ export default function ChalaniPage() {
                id: item.id,
                chalaniNo: item.chalaniNumber || item.dispatchNumber,
                miti: item.miti,
-               letterDate: item.dispatchDate,
+               letterDate: item.letterNumber || (item.dispatchDate ? item.dispatchDate.split('T')[0] : ""),
                recipientName: item.receiverName,
                receiver: item.receiverName,
                recipientAddress: item.receiverAddress,
                remarks: item.remarks,
                subject: item.subject,
                method: item.deliveryMethod || "Physical",
-               status: item.status || "स्वीकृत",
-               relatedFile: item.attachmentUrl,
-               tokAdeshPerson: item.orderOrDecision
+               letterType: item.deliveryMethod || "साधारण पत्र",
+               recipientEmail: item.peonBookNumber || "",
+               cc: item.referenceDartaNumber || "",
+               status: item.status || "प्रक्रियामा",
+               relatedFile: item.attachmentUrl || item.originatingDepartment || "",
+               tokAdeshPerson: item.orderOrDecision || ""
              }));
              setChalaniList(formattedList);
           } else if (Array.isArray(data) && data.length === 0) {
@@ -161,37 +164,48 @@ export default function ChalaniPage() {
 
     try {
       const data = await fetchApi(`/Chalani/${item.id}`);
+      const raw = data || baseObj;
+
+      let formattedDate = "";
+      if (raw.letterNumber && raw.letterNumber.trim()) {
+        formattedDate = raw.letterNumber.includes('T') ? raw.letterNumber.split('T')[0] : raw.letterNumber;
+      } else if (raw.dispatchDate) {
+        formattedDate = typeof raw.dispatchDate === 'string' && raw.dispatchDate.includes('T') 
+          ? raw.dispatchDate.split('T')[0] 
+          : raw.dispatchDate;
+      }
+
       setFormData({
-        subject: data.subject || baseObj.subject || "",
-        letterType: data.letterType || baseObj.letterType || "",
-        letterDate: data.dispatchDate || baseObj.letterDate || "",
-        recipientName: data.receiverName || baseObj.recipientName || baseObj.receiver || "",
-        recipientAddress: data.receiverAddress || baseObj.recipientAddress || "",
-        remarks: data.remarks || baseObj.remarks || "",
-        recipientEmail: data.recipientEmail || baseObj.recipientEmail || "",
-        tokAdeshPerson: data.orderOrDecision || baseObj.tokAdeshPerson || "",
-        approvalStatus: data.status || baseObj.status || "स्वीकृत",
-        cc: data.cc || baseObj.cc || "",
-        relatedFile: data.attachmentUrl || baseObj.relatedFile || "",
-        alertEmail: data.alertEmail || false,
-        alertSms: data.alertSms || false
+        subject: raw.subject || baseObj.subject || "",
+        letterType: raw.deliveryMethod || baseObj.letterType || raw.letterType || "साधारण पत्र",
+        letterDate: formattedDate || baseObj.letterDate || "",
+        recipientName: raw.receiverName || baseObj.recipientName || baseObj.receiver || "",
+        recipientAddress: raw.receiverAddress || baseObj.recipientAddress || "",
+        remarks: raw.remarks || baseObj.remarks || "",
+        recipientEmail: raw.peonBookNumber || baseObj.recipientEmail || raw.recipientEmail || "",
+        tokAdeshPerson: raw.orderOrDecision || baseObj.tokAdeshPerson || "",
+        approvalStatus: raw.status || baseObj.approvalStatus || baseObj.status || "प्रक्रियामा",
+        cc: raw.referenceDartaNumber || baseObj.cc || raw.cc || "",
+        relatedFile: raw.attachmentUrl || raw.originatingDepartment || baseObj.relatedFile || "",
+        alertEmail: false,
+        alertSms: false
       });
-      setMiti(data.miti || baseObj.miti || miti);
-      setChalaniNo(data.chalaniNumber || data.dispatchNumber || baseObj.chalaniNo);
+      setMiti(raw.miti || baseObj.miti || miti);
+      setChalaniNo(raw.chalaniNumber || raw.dispatchNumber || baseObj.chalaniNo);
       setEditId(item.id);
       setViewMode("form");
     } catch (err) {
       console.warn("Failed to fetch full Chalani item, using local state", err);
       setFormData({
         subject: baseObj.subject || "",
-        letterType: baseObj.letterType || "",
+        letterType: baseObj.letterType || baseObj.method || "साधारण पत्र",
         letterDate: baseObj.letterDate || "",
         recipientName: baseObj.recipientName || baseObj.receiver || "",
         recipientAddress: baseObj.recipientAddress || "",
         remarks: baseObj.remarks || "",
         recipientEmail: baseObj.recipientEmail || "",
         tokAdeshPerson: baseObj.tokAdeshPerson || "",
-        approvalStatus: baseObj.status || "स्वीकृत",
+        approvalStatus: baseObj.status || "प्रक्रियामा",
         cc: baseObj.cc || "",
         relatedFile: baseObj.relatedFile || "",
         alertEmail: false,

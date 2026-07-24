@@ -47,32 +47,37 @@ public class CreateChalaniCommandHandler : IRequestHandler<CreateChalaniCommand,
     private readonly IApplicationDbContext _context;
     private readonly ISequenceGeneratorService _sequenceGenerator;
     private readonly ITenantService _tenantService;
+    private readonly IWardService _wardService;
     private readonly IFiscalYearService _fiscalYearService;
 
     public CreateChalaniCommandHandler(
         IApplicationDbContext context,
         ISequenceGeneratorService sequenceGenerator,
         ITenantService tenantService,
+        IWardService wardService,
         IFiscalYearService fiscalYearService)
     {
         _context = context;
         _sequenceGenerator = sequenceGenerator;
         _tenantService = tenantService;
+        _wardService = wardService;
         _fiscalYearService = fiscalYearService;
     }
 
     public async Task<Guid> Handle(CreateChalaniCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantService.GetTenantId();
+        var wardId = _wardService.GetWardId();
         var fiscalYearId = _fiscalYearService.GetFiscalYearId();
 
         string generatedNumber = string.IsNullOrWhiteSpace(request.ChalaniNumber)
-            ? await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, null, fiscalYearId, "Chalani")
+            ? await _sequenceGenerator.GenerateNextSequenceAsync(tenantId, wardId, fiscalYearId, "Chalani")
             : request.ChalaniNumber;
 
         var entity = new LGOMS.Domain.Entities.Chalani
         {
             ChalaniNumber = generatedNumber,
+            WardId = wardId,
             DispatchDate = request.DispatchDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(request.DispatchDate, DateTimeKind.Utc),
             Miti = request.Miti,
             LetterNumber = request.LetterNumber,

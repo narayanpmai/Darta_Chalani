@@ -17,9 +17,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Register Tenant and FiscalYear Service
+// Register Tenant, Ward, and FiscalYear Service
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, CurrentTenantService>();
+builder.Services.AddScoped<IWardService, CurrentWardService>();
 builder.Services.AddScoped<IFiscalYearService, CurrentFiscalYearService>();
 
 // Configure JWT Authentication

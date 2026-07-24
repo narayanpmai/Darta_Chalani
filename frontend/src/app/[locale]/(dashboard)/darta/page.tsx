@@ -145,21 +145,32 @@ export default function DartaPage() {
 
     try {
       const data = await fetchApi(`/Darta/${item.id}`);
+      const raw = data || baseObj;
+
+      let formattedDate = "";
+      if (raw.receivedLetterDate && raw.receivedLetterDate.trim()) {
+        formattedDate = raw.receivedLetterDate.includes('T') ? raw.receivedLetterDate.split('T')[0] : raw.receivedLetterDate;
+      } else if (raw.registrationDate) {
+        formattedDate = typeof raw.registrationDate === 'string' && raw.registrationDate.includes('T') 
+          ? raw.registrationDate.split('T')[0] 
+          : raw.registrationDate;
+      }
+
       setFormData({
-        subject: data.subject || baseObj.subject || "",
-        letterType: data.letterType || baseObj.letterType || "साधारण पत्र",
-        letterDate: data.receivedLetterDate || baseObj.letterDate || "",
-        senderName: data.senderName || baseObj.senderName || "",
-        senderAddress: data.senderAddress || baseObj.senderAddress || "",
-        senderDispatchNo: data.receivedLetterNumber || baseObj.senderDispatchNo || "",
-        remarks: data.remarks || baseObj.remarks || "",
-        receiverEmail: data.receiverEmail || baseObj.receiverEmail || "",
-        receivingBranch: data.forwardedToDepartment || baseObj.receivingBranch || "",
-        status: data.status || baseObj.status || "दर्ता भएको",
-        relatedFile: data.attachmentUrl || baseObj.relatedFile || ""
+        subject: raw.subject || baseObj.subject || "",
+        letterType: raw.letterType || baseObj.letterType || "साधारण पत्र",
+        letterDate: formattedDate || baseObj.letterDate || "",
+        senderName: raw.senderName || baseObj.senderName || baseObj.sender || "",
+        senderAddress: raw.senderAddress || baseObj.senderAddress || "",
+        senderDispatchNo: raw.receivedLetterNumber || baseObj.senderDispatchNo || "",
+        remarks: raw.remarks || baseObj.remarks || "",
+        receiverEmail: raw.handledBy || baseObj.receiverEmail || "",
+        receivingBranch: raw.forwardedToDepartment || baseObj.receivingBranch || "प्रशासन शाखा",
+        status: raw.status || baseObj.status || "दर्ता भएको",
+        relatedFile: raw.attachmentUrl || baseObj.relatedFile || ""
       });
-      setMiti(data.miti || baseObj.miti || miti);
-      setDartaNo(data.dartaNumber || baseObj.dartaNo);
+      setMiti(raw.miti || baseObj.miti || miti);
+      setDartaNo(raw.dartaNumber || baseObj.dartaNo || dartaNo);
       setEditId(item.id);
       setViewMode("form");
     } catch (err) {
