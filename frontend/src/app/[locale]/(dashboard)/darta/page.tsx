@@ -440,10 +440,10 @@ export default function DartaPage() {
                         <SelectValue placeholder="छान्नुहोस्..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="general">साधारण पत्र</SelectItem>
-                        <SelectItem value="circular">परिपत्र</SelectItem>
-                        <SelectItem value="confidential">गोप्य</SelectItem>
-                        <SelectItem value="urgent">जरुरी</SelectItem>
+                        <SelectItem value="साधारण पत्र">साधारण पत्र</SelectItem>
+                        <SelectItem value="परिपत्र">परिपत्र</SelectItem>
+                        <SelectItem value="गोप्य">गोप्य</SelectItem>
+                        <SelectItem value="जरुरी">जरुरी</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -454,10 +454,10 @@ export default function DartaPage() {
                         <SelectValue placeholder="शाखा छान्नुहोस्..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">प्रशासन शाखा</SelectItem>
-                        <SelectItem value="planning">योजना शाखा</SelectItem>
-                        <SelectItem value="finance">आर्थिक प्रशासन</SelectItem>
-                        <SelectItem value="education">शिक्षा शाखा</SelectItem>
+                        <SelectItem value="प्रशासन शाखा">प्रशासन शाखा</SelectItem>
+                        <SelectItem value="योजना शाखा">योजना शाखा</SelectItem>
+                        <SelectItem value="आर्थिक प्रशासन">आर्थिक प्रशासन</SelectItem>
+                        <SelectItem value="शिक्षा शाखा">शिक्षा शाखा</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

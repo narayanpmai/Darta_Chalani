@@ -8,16 +8,16 @@ public class CreateDartaCommandValidator : AbstractValidator<CreateDartaCommand>
     {
         RuleFor(v => v.SenderName)
             .MaximumLength(200)
-            .NotEmpty().WithMessage("Sender Name is required.");
+            .NotEmpty().WithMessage("पठाउनेको नाम (Sender Name) आवश्यक छ।");
 
         RuleFor(v => v.Subject)
             .MaximumLength(500)
-            .NotEmpty().WithMessage("Subject is required.");
+            .NotEmpty().WithMessage("विषय (Subject) आवश्यक छ।");
 
         RuleFor(v => v.ReceivedLetterNumber)
-            .NotEmpty().WithMessage("Dispatch Number is required.");
+            .NotEmpty().WithMessage("पत्रको चलानी नम्बर (Dispatch Number) आवश्यक छ।");
 
         RuleFor(v => v.Miti)
-            .NotEmpty().WithMessage("Miti (Nepali Date) is required.");
+            .NotEmpty().WithMessage("मिति (Miti) आवश्यक छ।");
     }
 }

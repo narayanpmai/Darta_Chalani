@@ -26,6 +26,11 @@ public class ChalaniController : ControllerBase
             var result = await _mediator.Send(command);
             return Ok(new { id = result });
         }
+        catch (FluentValidation.ValidationException valEx)
+        {
+            var errorMessages = string.Join(", ", valEx.Errors.Select(e => e.ErrorMessage));
+            return BadRequest(new { message = errorMessages });
+        }
         catch (Exception ex)
         {
             var current = ex;

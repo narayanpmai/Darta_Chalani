@@ -254,6 +254,7 @@ export default function ChalaniPage() {
         ReceiverName: formData.recipientName,
         ReceiverAddress: formData.recipientAddress,
         Subject: formData.subject,
+        OriginatingDepartment: formData.relatedFile || "प्रशासन शाखा",
         Status: formData.approvalStatus,
         TokAdeshPerson: formData.tokAdeshPerson,
         Remarks: formData.remarks
@@ -461,10 +462,10 @@ export default function ChalaniPage() {
                         <SelectValue placeholder="छान्नुहोस्..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="general">साधारण पत्र</SelectItem>
-                        <SelectItem value="circular">परिपत्र</SelectItem>
-                        <SelectItem value="confidential">गोप्य</SelectItem>
-                        <SelectItem value="urgent">जरुरी</SelectItem>
+                        <SelectItem value="साधारण पत्र">साधारण पत्र</SelectItem>
+                        <SelectItem value="परिपत्र">परिपत्र</SelectItem>
+                        <SelectItem value="गोप्य">गोप्य</SelectItem>
+                        <SelectItem value="जरुरी">जरुरी</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
